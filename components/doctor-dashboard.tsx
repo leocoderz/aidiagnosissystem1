@@ -5,7 +5,23 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Users,
   AlertTriangle,
@@ -76,6 +92,19 @@ export default function DoctorDashboard({
   const [patients, setPatients] = useState<Patient[]>([]);
   const [notifications, setNotifications] = useState(5);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showAddPatient, setShowAddPatient] = useState(false);
+  const [isAddingPatient, setIsAddingPatient] = useState(false);
+  const [newPatientData, setNewPatientData] = useState({
+    name: "",
+    email: "",
+    age: "",
+    gender: "",
+    phone: "",
+    address: "",
+    emergencyContact: "",
+    condition: "",
+    severity: "Low" as "Low" | "Medium" | "High" | "Critical",
+  });
   const { toast } = useToast();
 
   const filteredPatients = patients.filter(
@@ -126,6 +155,117 @@ export default function DoctorDashboard({
   const getGreeting = () => {
     const timeOfDay = getTimeOfDay();
     return `Good ${timeOfDay}, Dr. ${user.name?.split(" ").slice(-1)[0] || user.name}!`;
+  };
+
+  const generatePatientId = () => {
+    return (
+      "PAT_" + Date.now().toString() + Math.random().toString(36).substr(2, 6)
+    );
+  };
+
+  const handleAddPatient = async () => {
+    if (!newPatientData.name || !newPatientData.email || !newPatientData.age) {
+      toast({
+        title: "Validation Error",
+        description: "Name, email, and age are required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsAddingPatient(true);
+
+    try {
+      // Create new patient object
+      const newPatient: Patient = {
+        id: generatePatientId(),
+        name: newPatientData.name,
+        age: parseInt(newPatientData.age),
+        gender: newPatientData.gender || "other",
+        lastVisit: new Date().toLocaleDateString(),
+        condition: newPatientData.condition || "General Checkup",
+        severity: newPatientData.severity,
+        vitals: {
+          heartRate: 72,
+          bloodPressure: "120/80",
+          temperature: 98.6,
+          oxygenSaturation: 98,
+        },
+        symptoms: [],
+      };
+
+      // Add to patients list
+      setPatients((prev) => [...prev, newPatient]);
+
+      // Also add to shared patients database for cross-component access
+      const existingPatients = JSON.parse(
+        localStorage.getItem("mediai_all_patients") || "[]",
+      );
+      const patientData = {
+        id: newPatient.id,
+        email: newPatientData.email,
+        name: newPatient.name,
+        type: "patient",
+        age: newPatient.age,
+        gender: newPatient.gender,
+        phone: newPatientData.phone,
+        address: newPatientData.address,
+        emergencyContact: newPatientData.emergencyContact,
+        registrationDate: new Date().toISOString(),
+        healthScore: 85,
+        status: "stable",
+        symptoms: 0,
+        diagnoses: 0,
+        vitals: newPatient.vitals,
+        alerts: 0,
+        conditions: [newPatient.condition],
+        lastVisit: new Date().toISOString(),
+        severity: newPatient.severity,
+        doctorId: user.id,
+      };
+
+      existingPatients.push(patientData);
+      localStorage.setItem(
+        "mediai_all_patients",
+        JSON.stringify(existingPatients),
+      );
+
+      // Reset form
+      setNewPatientData({
+        name: "",
+        email: "",
+        age: "",
+        gender: "",
+        phone: "",
+        address: "",
+        emergencyContact: "",
+        condition: "",
+        severity: "Low",
+      });
+
+      setShowAddPatient(false);
+
+      toast({
+        title: "Patient Added Successfully",
+        description: `${newPatient.name} has been added to your patient list`,
+      });
+
+      // Switch to patients tab to show the new patient
+      setActiveTab("patients");
+    } catch (error) {
+      console.error("Error adding patient:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add patient. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAddingPatient(false);
+    }
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setNewPatientData((prev) => ({ ...prev, [field]: value }));
   };
 
   return (
@@ -306,17 +446,254 @@ export default function DoctorDashboard({
               Quick Actions
             </h3>
             <div className="grid grid-cols-2 gap-4">
-              <Card className="border-0 bg-gradient-to-br from-green-50 to-emerald-50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-                <CardContent className="p-6 text-center">
-                  <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                    <Plus className="h-8 w-8 text-white" />
+              <Dialog open={showAddPatient} onOpenChange={setShowAddPatient}>
+                <DialogTrigger asChild>
+                  <Card className="border-0 bg-gradient-to-br from-green-50 to-emerald-50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer">
+                    <CardContent className="p-6 text-center">
+                      <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                        <Plus className="h-8 w-8 text-white" />
+                      </div>
+                      <h4 className="font-semibold text-gray-800 mb-1">
+                        Add Patient
+                      </h4>
+                      <p className="text-xs text-gray-600">
+                        Register new patient
+                      </p>
+                    </CardContent>
+                  </Card>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle className="text-xl font-bold text-green-700">
+                      Add New Patient
+                    </DialogTitle>
+                    <DialogDescription>
+                      Enter patient information to add them to your practice
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor="patient-name"
+                          className="text-sm font-medium"
+                        >
+                          Full Name *
+                        </Label>
+                        <Input
+                          id="patient-name"
+                          placeholder="Enter patient's full name"
+                          value={newPatientData.name}
+                          onChange={(e) =>
+                            handleInputChange("name", e.target.value)
+                          }
+                          className="h-10"
+                          disabled={isAddingPatient}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor="patient-email"
+                          className="text-sm font-medium"
+                        >
+                          Email *
+                        </Label>
+                        <Input
+                          id="patient-email"
+                          type="email"
+                          placeholder="patient@example.com"
+                          value={newPatientData.email}
+                          onChange={(e) =>
+                            handleInputChange("email", e.target.value)
+                          }
+                          className="h-10"
+                          disabled={isAddingPatient}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor="patient-age"
+                          className="text-sm font-medium"
+                        >
+                          Age *
+                        </Label>
+                        <Input
+                          id="patient-age"
+                          type="number"
+                          placeholder="Age"
+                          value={newPatientData.age}
+                          onChange={(e) =>
+                            handleInputChange("age", e.target.value)
+                          }
+                          className="h-10"
+                          min="1"
+                          max="120"
+                          disabled={isAddingPatient}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor="patient-gender"
+                          className="text-sm font-medium"
+                        >
+                          Gender
+                        </Label>
+                        <Select
+                          value={newPatientData.gender}
+                          onValueChange={(value) =>
+                            handleInputChange("gender", value)
+                          }
+                          disabled={isAddingPatient}
+                        >
+                          <SelectTrigger className="h-10">
+                            <SelectValue placeholder="Select gender" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="male">Male</SelectItem>
+                            <SelectItem value="female">Female</SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="patient-phone"
+                        className="text-sm font-medium"
+                      >
+                        Phone Number
+                      </Label>
+                      <Input
+                        id="patient-phone"
+                        type="tel"
+                        placeholder="+1 (555) 123-4567"
+                        value={newPatientData.phone}
+                        onChange={(e) =>
+                          handleInputChange("phone", e.target.value)
+                        }
+                        className="h-10"
+                        disabled={isAddingPatient}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="patient-address"
+                        className="text-sm font-medium"
+                      >
+                        Address
+                      </Label>
+                      <Input
+                        id="patient-address"
+                        placeholder="Patient's address"
+                        value={newPatientData.address}
+                        onChange={(e) =>
+                          handleInputChange("address", e.target.value)
+                        }
+                        className="h-10"
+                        disabled={isAddingPatient}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="emergency-contact"
+                        className="text-sm font-medium"
+                      >
+                        Emergency Contact
+                      </Label>
+                      <Input
+                        id="emergency-contact"
+                        placeholder="Emergency contact number"
+                        value={newPatientData.emergencyContact}
+                        onChange={(e) =>
+                          handleInputChange("emergencyContact", e.target.value)
+                        }
+                        className="h-10"
+                        disabled={isAddingPatient}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor="patient-condition"
+                          className="text-sm font-medium"
+                        >
+                          Initial Condition
+                        </Label>
+                        <Input
+                          id="patient-condition"
+                          placeholder="e.g., General Checkup, Hypertension"
+                          value={newPatientData.condition}
+                          onChange={(e) =>
+                            handleInputChange("condition", e.target.value)
+                          }
+                          className="h-10"
+                          disabled={isAddingPatient}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor="patient-severity"
+                          className="text-sm font-medium"
+                        >
+                          Severity Level
+                        </Label>
+                        <Select
+                          value={newPatientData.severity}
+                          onValueChange={(
+                            value: "Low" | "Medium" | "High" | "Critical",
+                          ) => handleInputChange("severity", value)}
+                          disabled={isAddingPatient}
+                        >
+                          <SelectTrigger className="h-10">
+                            <SelectValue placeholder="Select severity" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Low">Low</SelectItem>
+                            <SelectItem value="Medium">Medium</SelectItem>
+                            <SelectItem value="High">High</SelectItem>
+                            <SelectItem value="Critical">Critical</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
                   </div>
-                  <h4 className="font-semibold text-gray-800 mb-1">
-                    Add Patient
-                  </h4>
-                  <p className="text-xs text-gray-600">Register new patient</p>
-                </CardContent>
-              </Card>
+
+                  <div className="flex justify-end space-x-2 pt-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowAddPatient(false)}
+                      disabled={isAddingPatient}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleAddPatient}
+                      disabled={isAddingPatient}
+                      className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                    >
+                      {isAddingPatient ? (
+                        <>
+                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                          Adding...
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Patient
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
 
               <Card className="border-0 bg-gradient-to-br from-purple-50 to-pink-50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
                 <CardContent className="p-6 text-center">
@@ -457,7 +834,10 @@ export default function DoctorDashboard({
                 <p className="text-gray-500 mb-6">
                   Start adding patients to your practice
                 </p>
-                <Button className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 rounded-2xl">
+                <Button
+                  onClick={() => setShowAddPatient(true)}
+                  className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 rounded-2xl"
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   Add First Patient
                 </Button>
