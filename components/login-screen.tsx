@@ -202,10 +202,45 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
         user.hospital = formData.hospital;
       }
 
-      toast({
-        title: authMode === "signin" ? "Welcome Back!" : "Account Created!",
-        description: `${authMode === "signin" ? "Successfully signed in" : "Welcome to SympCare24"} as ${user.name}`,
-      });
+      // Send welcome email for new signups
+      if (authMode === "signup") {
+        try {
+          const emailResponse = await fetch("/api/send-email", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email: user.email,
+              name: user.name,
+              type: user.type,
+            }),
+          });
+
+          if (emailResponse.ok) {
+            toast({
+              title: "Account Created!",
+              description: `Welcome to SympCare24, ${user.name}! Check your email for a welcome message.`,
+            });
+          } else {
+            toast({
+              title: "Account Created!",
+              description: `Welcome to SympCare24, ${user.name}! (Email notification failed)`,
+            });
+          }
+        } catch (emailError) {
+          console.error("Email notification error:", emailError);
+          toast({
+            title: "Account Created!",
+            description: `Welcome to SympCare24, ${user.name}! (Email notification failed)`,
+          });
+        }
+      } else {
+        toast({
+          title: "Welcome Back!",
+          description: `Successfully signed in as ${user.name}`,
+        });
+      }
 
       onLogin(user);
     } catch (error: any) {
