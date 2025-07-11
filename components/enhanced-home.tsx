@@ -46,8 +46,8 @@ export default function EnhancedHome() {
   const [showLogin, setShowLogin] = useState(false);
   const { toast } = useToast();
 
-  // Check for existing user session on component mount
-  useState(() => {
+  // Check for existing user session on component mount (client-side only)
+  useEffect(() => {
     const savedUser = localStorage.getItem("sympcare24_user");
     if (savedUser) {
       try {
@@ -57,7 +57,7 @@ export default function EnhancedHome() {
         localStorage.removeItem("sympcare24_user");
       }
     }
-  });
+  }, []);
 
   const handleLogin = (userData: SympCareUser) => {
     setUser(userData);
