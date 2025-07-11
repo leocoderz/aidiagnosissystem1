@@ -66,6 +66,13 @@ Please provide a structured medical analysis in the following format:
 
 Base your analysis on current medical evidence and clinical guidelines. Be specific with treatment recommendations while emphasizing the importance of professional medical consultation for proper diagnosis and treatment.`;
 
+    // Check if OpenAI API key is available
+    if (!process.env.OPENAI_API_KEY) {
+      console.log("OpenAI API key not found, using fallback diagnosis");
+      const fallbackDiagnosis = generateRuleBasedDiagnosis(symptoms);
+      return Response.json(fallbackDiagnosis);
+    }
+
     const { text } = await generateText({
       model: openai("gpt-4o"),
       prompt,
