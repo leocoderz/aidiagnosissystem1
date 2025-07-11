@@ -1,10 +1,9 @@
-import { generateText } from "ai"
-import { openai } from "@ai-sdk/openai"
-import { symptoms } from "./symptoms" // Declare the symptoms variable
+import { generateText } from "ai";
+import { openai } from "@ai-sdk/openai";
 
 export async function POST(req: Request) {
   try {
-    const { symptoms, patientInfo } = await req.json()
+    const { symptoms, patientInfo } = await req.json();
 
     if (!symptoms || symptoms.length === 0) {
       return Response.json({
@@ -15,7 +14,7 @@ export async function POST(req: Request) {
         recommendations: ["Please provide symptoms for analysis"],
         treatment: [],
         seekImmediateCare: false,
-      })
+      });
     }
 
     // Prepare detailed symptom information for AI analysis
@@ -23,15 +22,15 @@ export async function POST(req: Request) {
       .map((symptom: any) => {
         if (typeof symptom === "string") {
           try {
-            const parsed = JSON.parse(symptom)
-            return `${parsed.name} (severity: ${parsed.severity}/10, duration: ${parsed.duration || "not specified"}, location: ${parsed.location || "not specified"}, description: ${parsed.description || "none"})`
+            const parsed = JSON.parse(symptom);
+            return `${parsed.name} (severity: ${parsed.severity}/10, duration: ${parsed.duration || "not specified"}, location: ${parsed.location || "not specified"}, description: ${parsed.description || "none"})`;
           } catch {
-            return symptom
+            return symptom;
           }
         }
-        return `${symptom.name} (severity: ${symptom.severity}/10, duration: ${symptom.duration || "not specified"}, location: ${symptom.location || "not specified"}, description: ${symptom.description || "none"})`
+        return `${symptom.name} (severity: ${symptom.severity}/10, duration: ${symptom.duration || "not specified"}, location: ${symptom.location || "not specified"}, description: ${symptom.description || "none"})`;
       })
-      .join("; ")
+      .join("; ");
 
     const patientContext = patientInfo
       ? `
@@ -42,7 +41,7 @@ Patient Information:
 - Current Medications: ${patientInfo.medications || "None reported"}
 - Allergies: ${patientInfo.allergies || "None reported"}
 `
-      : ""
+      : "";
 
     const prompt = `You are an experienced medical AI assistant with expertise in differential diagnosis and treatment planning. Analyze the following symptoms and provide a comprehensive medical assessment.
 
@@ -65,7 +64,7 @@ Please provide a structured medical analysis in the following format:
 7. PROGNOSIS: Expected outcome and timeline for recovery
 8. PREVENTION: Measures to prevent recurrence or worsening
 
-Base your analysis on current medical evidence and clinical guidelines. Be specific with treatment recommendations while emphasizing the importance of professional medical consultation for proper diagnosis and treatment.`
+Base your analysis on current medical evidence and clinical guidelines. Be specific with treatment recommendations while emphasizing the importance of professional medical consultation for proper diagnosis and treatment.`;
 
     const { text } = await generateText({
       model: openai("gpt-4o"),
@@ -76,98 +75,137 @@ Base your analysis on current medical evidence and clinical guidelines. Be speci
       Be specific with treatment recommendations while maintaining appropriate medical caution.
       Format responses clearly with proper medical terminology and practical guidance.
       Focus on actionable medical advice while being appropriately cautious about serious conditions.`,
-    })
+    });
 
     // Parse the AI response and structure it
-    const diagnosis = parseAIResponse(text, symptoms)
+    const diagnosis = parseAIResponse(text, symptoms);
 
-    return Response.json(diagnosis)
+    return Response.json(diagnosis);
   } catch (error) {
-    console.error("AI Diagnosis API error:", error)
+    console.error("AI Diagnosis API error:", error);
 
     // Fallback to rule-based diagnosis
-    const fallbackDiagnosis = generateRuleBasedDiagnosis(symptoms)
-    return Response.json(fallbackDiagnosis)
+    const fallbackDiagnosis = generateRuleBasedDiagnosis(symptoms);
+    return Response.json(fallbackDiagnosis);
   }
 }
 
 function parseAIResponse(aiText: string, symptoms: any[]) {
-  const lines = aiText.split("\n").filter((line) => line.trim())
+  const lines = aiText.split("\n").filter((line) => line.trim());
 
-  let condition = "Medical Assessment"
-  let confidence = 75
-  let severity = "moderate"
-  const explanation = aiText
-  let recommendations: string[] = []
-  let treatment: string[] = []
-  const differentialDiagnoses: Array<{ condition: string; probability: number }> = []
-  const redFlags: string[] = []
-  let prognosis = ""
-  const prevention: string[] = []
-  let seekImmediateCare = false
+  let condition = "Medical Assessment";
+  let confidence = 75;
+  let severity = "moderate";
+  const explanation = aiText;
+  let recommendations: string[] = [];
+  let treatment: string[] = [];
+  const differentialDiagnoses: Array<{
+    condition: string;
+    probability: number;
+  }> = [];
+  const redFlags: string[] = [];
+  let prognosis = "";
+  const prevention: string[] = [];
+  let seekImmediateCare = false;
 
   // Parse structured response sections
-  let currentSection = ""
+  let currentSection = "";
 
   for (const line of lines) {
-    const upperLine = line.toUpperCase()
-    const trimmedLine = line.trim()
+    const upperLine = line.toUpperCase();
+    const trimmedLine = line.trim();
 
     // Identify sections
-    if (upperLine.includes("PRIMARY DIAGNOSIS") || upperLine.includes("DIAGNOSIS:")) {
-      currentSection = "diagnosis"
-      const match = line.match(/(\d+)%/)
-      if (match) confidence = Number.parseInt(match[1])
-      const conditionMatch = line.match(/(?:diagnosis|condition)[:\-\s]*(.+?)(?:\s*\(|\s*with|\s*-|$)/i)
-      if (conditionMatch) condition = conditionMatch[1].trim()
+    if (
+      upperLine.includes("PRIMARY DIAGNOSIS") ||
+      upperLine.includes("DIAGNOSIS:")
+    ) {
+      currentSection = "diagnosis";
+      const match = line.match(/(\d+)%/);
+      if (match) confidence = Number.parseInt(match[1]);
+      const conditionMatch = line.match(
+        /(?:diagnosis|condition)[:\-\s]*(.+?)(?:\s*\(|\s*with|\s*-|$)/i,
+      );
+      if (conditionMatch) condition = conditionMatch[1].trim();
     } else if (upperLine.includes("SEVERITY")) {
-      currentSection = "severity"
-      if (upperLine.includes("CRITICAL") || upperLine.includes("SEVERE")) severity = "severe"
-      else if (upperLine.includes("MODERATE")) severity = "moderate"
-      else if (upperLine.includes("MILD")) severity = "mild"
-    } else if (upperLine.includes("TREATMENT") || upperLine.includes("RECOMMENDATIONS")) {
-      currentSection = "treatment"
+      currentSection = "severity";
+      if (upperLine.includes("CRITICAL") || upperLine.includes("SEVERE"))
+        severity = "severe";
+      else if (upperLine.includes("MODERATE")) severity = "moderate";
+      else if (upperLine.includes("MILD")) severity = "mild";
+    } else if (
+      upperLine.includes("TREATMENT") ||
+      upperLine.includes("RECOMMENDATIONS")
+    ) {
+      currentSection = "treatment";
     } else if (upperLine.includes("DIFFERENTIAL")) {
-      currentSection = "differential"
-    } else if (upperLine.includes("RED FLAGS") || upperLine.includes("WARNING")) {
-      currentSection = "redflags"
+      currentSection = "differential";
+    } else if (
+      upperLine.includes("RED FLAGS") ||
+      upperLine.includes("WARNING")
+    ) {
+      currentSection = "redflags";
     } else if (upperLine.includes("PROGNOSIS")) {
-      currentSection = "prognosis"
+      currentSection = "prognosis";
     } else if (upperLine.includes("PREVENTION")) {
-      currentSection = "prevention"
+      currentSection = "prevention";
     }
 
     // Parse content based on current section
-    if (trimmedLine.startsWith("-") || trimmedLine.startsWith("•") || /^\d+\./.test(trimmedLine)) {
-      const content = trimmedLine.replace(/^[-•\d.]\s*/, "").trim()
+    if (
+      trimmedLine.startsWith("-") ||
+      trimmedLine.startsWith("•") ||
+      /^\d+\./.test(trimmedLine)
+    ) {
+      const content = trimmedLine.replace(/^[-•\d.]\s*/, "").trim();
       if (content) {
         switch (currentSection) {
           case "treatment":
-            treatment.push(content)
-            break
+            treatment.push(content);
+            break;
           case "differential":
-            const probMatch = content.match(/(\d+)%/)
-            const prob = probMatch ? Number.parseInt(probMatch[1]) : 10
-            const condName = content.replace(/$$\d+%$$/, "").trim()
-            if (condName) differentialDiagnoses.push({ condition: condName, probability: prob })
-            break
+            const probMatch = content.match(/(\d+)%/);
+            const prob = probMatch ? Number.parseInt(probMatch[1]) : 10;
+            const condName = content.replace(/$$\d+%$$/, "").trim();
+            if (condName)
+              differentialDiagnoses.push({
+                condition: condName,
+                probability: prob,
+              });
+            break;
           case "redflags":
-            redFlags.push(content)
-            break
+            redFlags.push(content);
+            break;
           case "prevention":
-            prevention.push(content)
-            break
+            prevention.push(content);
+            break;
         }
       }
-    } else if (currentSection === "prognosis" && trimmedLine && !upperLine.includes("PROGNOSIS")) {
-      prognosis += trimmedLine + " "
+    } else if (
+      currentSection === "prognosis" &&
+      trimmedLine &&
+      !upperLine.includes("PROGNOSIS")
+    ) {
+      prognosis += trimmedLine + " ";
     }
   }
 
   // Check for emergency conditions
-  const emergencyKeywords = ["immediate", "emergency", "urgent", "critical", "severe", "911"]
-  if (emergencyKeywords.some((keyword) => aiText.toLowerCase().includes(keyword)) || severity === "severe") {
-    seekImmediateCare = true
+  const emergencyKeywords = [
+    "immediate",
+    "emergency",
+    "urgent",
+    "critical",
+    "severe",
+    "911",
+  ];
+  if (
+    emergencyKeywords.some((keyword) =>
+      aiText.toLowerCase().includes(keyword),
+    ) ||
+    severity === "severe"
+  ) {
+    seekImmediateCare = true;
   }
 
   // Default values if parsing failed
@@ -178,7 +216,7 @@ function parseAIResponse(aiText: string, symptoms: any[]) {
       "Over-the-counter pain relief as needed (acetaminophen or ibuprofen)",
       "Consult healthcare provider if symptoms persist or worsen",
       "Follow up within 3-7 days if no improvement",
-    ]
+    ];
   }
 
   if (recommendations.length === 0) {
@@ -188,14 +226,16 @@ function parseAIResponse(aiText: string, symptoms: any[]) {
       "Maintain good nutrition and hydration",
       "Get adequate rest and sleep",
       "Avoid known triggers if applicable",
-    ]
+    ];
   }
 
   return {
-    condition: condition.replace(/[^\w\s-]/g, "").trim() || "Medical Assessment",
+    condition:
+      condition.replace(/[^\w\s-]/g, "").trim() || "Medical Assessment",
     confidence: Math.min(Math.max(confidence, 60), 95),
     severity,
-    explanation: explanation.substring(0, 1000) + (explanation.length > 1000 ? "..." : ""),
+    explanation:
+      explanation.substring(0, 1000) + (explanation.length > 1000 ? "..." : ""),
     recommendations,
     treatment,
     differentialDiagnoses: differentialDiagnoses.slice(0, 4),
@@ -207,23 +247,32 @@ function parseAIResponse(aiText: string, symptoms: any[]) {
     seekImmediateCare,
     aiGenerated: true,
     timestamp: new Date().toISOString(),
-  }
+  };
 }
 
 function generateRuleBasedDiagnosis(symptoms: any[]) {
   const symptomText = symptoms
-    .map((s) => (typeof s === "string" ? s : `${s.name} ${s.description || ""}`))
+    .map((s) =>
+      typeof s === "string" ? s : `${s.name} ${s.description || ""}`,
+    )
     .join(" ")
-    .toLowerCase()
+    .toLowerCase();
 
   // Emergency conditions
-  const emergencyKeywords = ["chest pain", "difficulty breathing", "severe", "unbearable", "emergency"]
+  const emergencyKeywords = [
+    "chest pain",
+    "difficulty breathing",
+    "severe",
+    "unbearable",
+    "emergency",
+  ];
   if (emergencyKeywords.some((keyword) => symptomText.includes(keyword))) {
     return {
       condition: "Emergency Medical Condition",
       confidence: 95,
       severity: "severe",
-      explanation: "Your symptoms suggest a serious condition that requires immediate medical attention.",
+      explanation:
+        "Your symptoms suggest a serious condition that requires immediate medical attention.",
       recommendations: [
         "Seek immediate emergency medical care",
         "Call 911 or go to the nearest emergency room",
@@ -241,12 +290,22 @@ function generateRuleBasedDiagnosis(symptoms: any[]) {
         { condition: "Severe allergic reaction", probability: 20 },
         { condition: "Acute neurological event", probability: 15 },
       ],
-      redFlags: ["Worsening symptoms", "Loss of consciousness", "Severe pain", "Difficulty breathing"],
-      prognosis: "Depends on immediate medical intervention and underlying condition",
-      prevention: ["Regular health checkups", "Emergency action plan", "Know warning signs"],
+      redFlags: [
+        "Worsening symptoms",
+        "Loss of consciousness",
+        "Severe pain",
+        "Difficulty breathing",
+      ],
+      prognosis:
+        "Depends on immediate medical intervention and underlying condition",
+      prevention: [
+        "Regular health checkups",
+        "Emergency action plan",
+        "Know warning signs",
+      ],
       seekImmediateCare: true,
       aiGenerated: false,
-    }
+    };
   }
 
   // Respiratory conditions
@@ -276,7 +335,12 @@ function generateRuleBasedDiagnosis(symptoms: any[]) {
         { condition: "Allergic rhinitis", probability: 10 },
         { condition: "Early pneumonia", probability: 5 },
       ],
-      redFlags: ["High fever over 103°F (39.4°C)", "Difficulty breathing", "Severe headache", "Chest pain"],
+      redFlags: [
+        "High fever over 103°F (39.4°C)",
+        "Difficulty breathing",
+        "Severe headache",
+        "Chest pain",
+      ],
       prognosis:
         "Usually resolves within 7-10 days with proper care. Most people recover completely without complications.",
       prevention: [
@@ -287,7 +351,7 @@ function generateRuleBasedDiagnosis(symptoms: any[]) {
       ],
       seekImmediateCare: false,
       aiGenerated: false,
-    }
+    };
   }
 
   // Default assessment
@@ -316,10 +380,21 @@ function generateRuleBasedDiagnosis(symptoms: any[]) {
       { condition: "Minor bacterial infection", probability: 20 },
       { condition: "Allergic reaction", probability: 10 },
     ],
-    redFlags: ["Worsening symptoms", "High fever", "Severe pain", "Difficulty breathing"],
-    prognosis: "Good with appropriate care and monitoring. Most mild conditions resolve within a few days to a week.",
-    prevention: ["Healthy lifestyle", "Regular exercise", "Stress management", "Adequate sleep"],
+    redFlags: [
+      "Worsening symptoms",
+      "High fever",
+      "Severe pain",
+      "Difficulty breathing",
+    ],
+    prognosis:
+      "Good with appropriate care and monitoring. Most mild conditions resolve within a few days to a week.",
+    prevention: [
+      "Healthy lifestyle",
+      "Regular exercise",
+      "Stress management",
+      "Adequate sleep",
+    ],
     seekImmediateCare: false,
     aiGenerated: false,
-  }
+  };
 }
