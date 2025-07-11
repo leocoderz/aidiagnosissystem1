@@ -1,15 +1,20 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
   Phone,
   Mail,
@@ -24,35 +29,37 @@ import {
   Shield,
   CheckCircle2,
   UserPlus,
-} from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
+  Sparkles,
+  ArrowRight,
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface LoginUser {
-  id: string
-  email: string
-  name: string
-  avatar?: string
-  type: "patient" | "doctor"
-  age?: number
-  gender?: "male" | "female" | "other"
-  phone?: string
-  address?: string
-  emergencyContact?: string
-  medicalHistory?: string[]
-  specialization?: string
-  licenseNumber?: string
-  hospital?: string
+  id: string;
+  email: string;
+  name: string;
+  avatar?: string;
+  type: "patient" | "doctor";
+  age?: number;
+  gender?: "male" | "female" | "other";
+  phone?: string;
+  address?: string;
+  emergencyContact?: string;
+  medicalHistory?: string[];
+  specialization?: string;
+  licenseNumber?: string;
+  hospital?: string;
 }
 
 interface LoginScreenProps {
-  onLogin: (user: LoginUser) => void
+  onLogin: (user: LoginUser) => void;
 }
 
 export default function LoginScreen({ onLogin }: LoginScreenProps) {
-  const [activeTab, setActiveTab] = useState("patient")
-  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin")
-  const [isLoading, setIsLoading] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
+  const [activeTab, setActiveTab] = useState("patient");
+  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -66,87 +73,99 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
     specialization: "",
     licenseNumber: "",
     hospital: "",
-  })
-  const { toast } = useToast()
+  });
+  const { toast } = useToast();
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-  }
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
 
   const generateUserId = () => {
-    return Date.now().toString() + Math.random().toString(36).substr(2, 9)
-  }
+    return Date.now().toString() + Math.random().toString(36).substr(2, 9);
+  };
 
   const validateForm = () => {
     if (!formData.email || !formData.password) {
-      throw new Error("Email and password are required")
+      throw new Error("Email and password are required");
     }
 
     if (authMode === "signup") {
       if (!formData.name) {
-        throw new Error("Full name is required")
+        throw new Error("Full name is required");
       }
 
       if (formData.password !== formData.confirmPassword) {
-        throw new Error("Passwords do not match")
+        throw new Error("Passwords do not match");
       }
 
       if (formData.password.length < 6) {
-        throw new Error("Password must be at least 6 characters")
+        throw new Error("Password must be at least 6 characters");
       }
 
       if (activeTab === "patient") {
         if (!formData.phone || !formData.age) {
-          throw new Error("Phone number and age are required for patients")
+          throw new Error("Phone number and age are required for patients");
         }
-        if (Number.parseInt(formData.age) < 1 || Number.parseInt(formData.age) > 120) {
-          throw new Error("Please enter a valid age")
+        if (
+          Number.parseInt(formData.age) < 1 ||
+          Number.parseInt(formData.age) > 120
+        ) {
+          throw new Error("Please enter a valid age");
         }
       }
 
       if (activeTab === "doctor") {
-        if (!formData.specialization || !formData.licenseNumber || !formData.hospital) {
-          throw new Error("Specialization, license number, and hospital are required for doctors")
+        if (
+          !formData.specialization ||
+          !formData.licenseNumber ||
+          !formData.hospital
+        ) {
+          throw new Error(
+            "Specialization, license number, and hospital are required for doctors",
+          );
         }
       }
     }
 
     // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      throw new Error("Please enter a valid email address")
+      throw new Error("Please enter a valid email address");
     }
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+    e.preventDefault();
+    setIsLoading(true);
 
     try {
-      validateForm()
+      validateForm();
 
       // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      const userId = generateUserId()
+      const userId = generateUserId();
       const user: LoginUser = {
         id: userId,
         email: formData.email,
         name: formData.name || formData.email.split("@")[0],
         type: activeTab as "patient" | "doctor",
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.name || formData.email}`,
-      }
+      };
 
       if (activeTab === "patient") {
-        user.age = Number.parseInt(formData.age) || 25
-        user.gender = (formData.gender as "male" | "female" | "other") || "other"
-        user.phone = formData.phone
-        user.address = formData.address
-        user.emergencyContact = formData.emergencyContact
-        user.medicalHistory = []
+        user.age = Number.parseInt(formData.age) || 25;
+        user.gender =
+          (formData.gender as "male" | "female" | "other") || "other";
+        user.phone = formData.phone;
+        user.address = formData.address;
+        user.emergencyContact = formData.emergencyContact;
+        user.medicalHistory = [];
 
         // Save patient to the shared patients database
-        const existingPatients = JSON.parse(localStorage.getItem("mediai_all_patients") || "[]")
+        const existingPatients = JSON.parse(
+          localStorage.getItem("mediai_all_patients") || "[]",
+        );
         const patientData = {
           ...user,
           registrationDate: new Date().toISOString(),
@@ -163,44 +182,49 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
           alerts: 0,
           conditions: [],
           lastVisit: new Date().toISOString(),
-        }
+        };
 
-        const existingPatientIndex = existingPatients.findIndex((p: any) => p.email === user.email)
+        const existingPatientIndex = existingPatients.findIndex(
+          (p: any) => p.email === user.email,
+        );
         if (existingPatientIndex >= 0) {
-          existingPatients[existingPatientIndex] = patientData
+          existingPatients[existingPatientIndex] = patientData;
         } else {
-          existingPatients.push(patientData)
+          existingPatients.push(patientData);
         }
 
-        localStorage.setItem("mediai_all_patients", JSON.stringify(existingPatients))
+        localStorage.setItem(
+          "mediai_all_patients",
+          JSON.stringify(existingPatients),
+        );
       } else {
-        user.specialization = formData.specialization
-        user.licenseNumber = formData.licenseNumber
-        user.hospital = formData.hospital
+        user.specialization = formData.specialization;
+        user.licenseNumber = formData.licenseNumber;
+        user.hospital = formData.hospital;
       }
 
       toast({
-        title: authMode === "signin" ? "Welcome Back!" : "Account Created Successfully!",
+        title: authMode === "signin" ? "Welcome Back!" : "Account Created!",
         description: `${authMode === "signin" ? "Successfully signed in" : "Welcome to SympCare24"} as ${user.name}`,
-      })
+      });
 
-      onLogin(user)
+      onLogin(user);
     } catch (error: any) {
       toast({
         title: "Error",
         description: error.message,
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleDemoLogin = async (type: "patient" | "doctor") => {
-    setIsLoading(true)
+    setIsLoading(true);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       const demoUsers = {
         patient: {
@@ -225,12 +249,14 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
           hospital: "SympCare24 Medical Center",
           avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=sarah",
         },
-      }
+      };
 
-      const user = demoUsers[type]
+      const user = demoUsers[type];
 
       if (type === "patient") {
-        const existingPatients = JSON.parse(localStorage.getItem("mediai_all_patients") || "[]")
+        const existingPatients = JSON.parse(
+          localStorage.getItem("mediai_all_patients") || "[]",
+        );
         const patientData = {
           ...user,
           registrationDate: new Date().toISOString(),
@@ -247,29 +273,39 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
           alerts: 0,
           conditions: [],
           lastVisit: new Date().toISOString(),
-        }
+        };
 
-        const existingPatientIndex = existingPatients.findIndex((p: any) => p.email === user.email)
+        const existingPatientIndex = existingPatients.findIndex(
+          (p: any) => p.email === user.email,
+        );
         if (existingPatientIndex >= 0) {
-          existingPatients[existingPatientIndex] = patientData
+          existingPatients[existingPatientIndex] = patientData;
         } else {
-          existingPatients.push(patientData)
+          existingPatients.push(patientData);
         }
 
-        localStorage.setItem("mediai_all_patients", JSON.stringify(existingPatients))
+        localStorage.setItem(
+          "mediai_all_patients",
+          JSON.stringify(existingPatients),
+        );
       }
 
-      onLogin(user)
+      toast({
+        title: "Demo Login Successful",
+        description: `Welcome to the ${type} demo experience!`,
+      });
+
+      onLogin(user);
     } catch (error) {
       toast({
         title: "Demo Login Failed",
         description: "Please try again",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const resetForm = () => {
     setFormData({
@@ -285,419 +321,467 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
       specialization: "",
       licenseNumber: "",
       hospital: "",
-    })
-  }
+    });
+  };
 
   const switchAuthMode = () => {
-    setAuthMode(authMode === "signin" ? "signup" : "signin")
-    resetForm()
-  }
+    setAuthMode(authMode === "signin" ? "signup" : "signin");
+    resetForm();
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-teal-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-700 flex items-center justify-center p-4">
-      <div className="w-full max-w-lg">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-6">
-            <div className="relative">
-              <div className="w-20 h-20 bg-gradient-to-r from-blue-600 to-teal-600 rounded-3xl flex items-center justify-center shadow-2xl">
-                <Heart className="h-10 w-10 text-white" />
-              </div>
-              <div className="absolute -top-2 -right-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
-                <CheckCircle2 className="h-4 w-4 text-white" />
-              </div>
+    <div className="w-full max-w-md mx-auto">
+      {/* Header */}
+      <div className="text-center mb-8">
+        <div className="flex items-center justify-center mb-6">
+          <div className="relative">
+            <div className="w-20 h-20 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-3xl flex items-center justify-center shadow-2xl">
+              <Heart className="h-10 w-10 text-white" />
+            </div>
+            <div className="absolute -top-2 -right-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
+              <CheckCircle2 className="h-4 w-4 text-white" />
             </div>
           </div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent mb-2">
-            SympCare24
-          </h1>
-          <p className="text-gray-600 dark:text-gray-300">Your AI-Powered Health Companion</p>
         </div>
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-2">
+          SympCare24
+        </h1>
+        <p className="text-gray-600">Your AI-Powered Health Companion</p>
+      </div>
 
-        <Card className="shadow-2xl border-0 bg-white/80 backdrop-blur-sm">
-          <CardHeader className="space-y-4">
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-2 bg-gray-100 dark:bg-gray-800">
-                <TabsTrigger
-                  value="patient"
-                  className="flex items-center gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white"
-                >
-                  <User className="h-4 w-4" />
-                  Patient
-                </TabsTrigger>
-                <TabsTrigger
-                  value="doctor"
-                  className="flex items-center gap-2 data-[state=active]:bg-teal-600 data-[state=active]:text-white"
-                >
-                  <Stethoscope className="h-4 w-4" />
-                  Doctor
-                </TabsTrigger>
-              </TabsList>
+      <Card className="shadow-2xl border-0 bg-white/90 backdrop-blur-sm">
+        <CardHeader className="space-y-4 pb-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-2 bg-gray-100/80 h-12 rounded-2xl">
+              <TabsTrigger
+                value="patient"
+                className="flex items-center gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white rounded-xl font-medium transition-all duration-300"
+              >
+                <User className="h-4 w-4" />
+                Patient
+              </TabsTrigger>
+              <TabsTrigger
+                value="doctor"
+                className="flex items-center gap-2 data-[state=active]:bg-cyan-600 data-[state=active]:text-white rounded-xl font-medium transition-all duration-300"
+              >
+                <Stethoscope className="h-4 w-4" />
+                Doctor
+              </TabsTrigger>
+            </TabsList>
 
-              <TabsContent value="patient">
-                <div className="text-center">
-                  <CardTitle className="text-2xl flex items-center justify-center gap-2">
-                    {authMode === "signin" ? "Welcome Back" : "Create Patient Account"}
-                    <Badge variant="outline" className="border-blue-200 text-blue-700 bg-blue-50">
-                      Patient
-                    </Badge>
-                  </CardTitle>
-                  <p className="text-sm text-gray-600 mt-2">
-                    {authMode === "signin" ? "Sign in to your patient account" : "Join our healthcare community"}
-                  </p>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="doctor">
-                <div className="text-center">
-                  <CardTitle className="text-2xl flex items-center justify-center gap-2">
-                    {authMode === "signin" ? "Welcome Back" : "Create Doctor Account"}
-                    <Badge variant="outline" className="border-teal-200 text-teal-700 bg-teal-50">
-                      Doctor
-                    </Badge>
-                  </CardTitle>
-                  <p className="text-sm text-gray-600 mt-2">
-                    {authMode === "signin" ? "Sign in to your doctor account" : "Join our medical professionals"}
-                  </p>
-                </div>
-              </TabsContent>
-            </Tabs>
-          </CardHeader>
-
-          <CardContent className="space-y-6">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {authMode === "signup" && (
-                <div className="space-y-2">
-                  <Label htmlFor="name" className="text-sm font-medium">
-                    Full Name *
-                  </Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      id="name"
-                      type="text"
-                      placeholder="Enter your full name"
-                      value={formData.name}
-                      onChange={(e) => handleInputChange("name", e.target.value)}
-                      className="pl-10 h-12"
-                      required={authMode === "signup"}
-                      disabled={isLoading}
-                    />
-                  </div>
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium">
-                  Email Address *
-                </Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="Enter your email"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange("email", e.target.value)}
-                    className="pl-10 h-12"
-                    required
-                    disabled={isLoading}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-medium">
-                  Password *
-                </Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
-                    value={formData.password}
-                    onChange={(e) => handleInputChange("password", e.target.value)}
-                    className="pl-10 pr-10 h-12"
-                    required
-                    disabled={isLoading}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-1 top-1 h-10 w-10"
-                    onClick={() => setShowPassword(!showPassword)}
+            <TabsContent value="patient" className="mt-6">
+              <div className="text-center">
+                <CardTitle className="text-2xl flex items-center justify-center gap-2 mb-2">
+                  {authMode === "signin" ? "Welcome Back" : "Join SympCare24"}
+                  <Badge
+                    variant="outline"
+                    className="border-blue-200 text-blue-700 bg-blue-50 rounded-full"
                   >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </Button>
+                    Patient
+                  </Badge>
+                </CardTitle>
+                <p className="text-sm text-gray-600">
+                  {authMode === "signin"
+                    ? "Sign in to your patient account"
+                    : "Create your patient account"}
+                </p>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="doctor" className="mt-6">
+              <div className="text-center">
+                <CardTitle className="text-2xl flex items-center justify-center gap-2 mb-2">
+                  {authMode === "signin" ? "Welcome Back" : "Join Our Team"}
+                  <Badge
+                    variant="outline"
+                    className="border-cyan-200 text-cyan-700 bg-cyan-50 rounded-full"
+                  >
+                    Doctor
+                  </Badge>
+                </CardTitle>
+                <p className="text-sm text-gray-600">
+                  {authMode === "signin"
+                    ? "Sign in to your doctor account"
+                    : "Join our medical professionals"}
+                </p>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardHeader>
+
+        <CardContent className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {authMode === "signup" && (
+              <div className="space-y-2">
+                <Label
+                  htmlFor="name"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Full Name *
+                </Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="name"
+                    type="text"
+                    placeholder="Enter your full name"
+                    value={formData.name}
+                    onChange={(e) => handleInputChange("name", e.target.value)}
+                    className="pl-10 h-12 rounded-2xl border-gray-200 focus:border-blue-500 focus:ring-blue-500 transition-all duration-300"
+                    required={authMode === "signup"}
+                    disabled={isLoading}
+                  />
                 </div>
               </div>
+            )}
 
-              {authMode === "signup" && (
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword" className="text-sm font-medium">
-                    Confirm Password *
-                  </Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <div className="space-y-2">
+              <Label
+                htmlFor="email"
+                className="text-sm font-medium text-gray-700"
+              >
+                Email Address *
+              </Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Enter your email"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange("email", e.target.value)}
+                  className="pl-10 h-12 rounded-2xl border-gray-200 focus:border-blue-500 focus:ring-blue-500 transition-all duration-300"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label
+                htmlFor="password"
+                className="text-sm font-medium text-gray-700"
+              >
+                Password *
+              </Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  value={formData.password}
+                  onChange={(e) =>
+                    handleInputChange("password", e.target.value)
+                  }
+                  className="pl-10 pr-12 h-12 rounded-2xl border-gray-200 focus:border-blue-500 focus:ring-blue-500 transition-all duration-300"
+                  required
+                  disabled={isLoading}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-1 top-1/2 transform -translate-y-1/2 h-10 w-10 rounded-full hover:bg-gray-100"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {authMode === "signup" && (
+              <div className="space-y-2">
+                <Label
+                  htmlFor="confirmPassword"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Confirm Password *
+                </Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    placeholder="Confirm your password"
+                    value={formData.confirmPassword}
+                    onChange={(e) =>
+                      handleInputChange("confirmPassword", e.target.value)
+                    }
+                    className="pl-10 h-12 rounded-2xl border-gray-200 focus:border-blue-500 focus:ring-blue-500 transition-all duration-300"
+                    required={authMode === "signup"}
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Patient-specific fields for signup */}
+            {authMode === "signup" && activeTab === "patient" && (
+              <div className="space-y-4 pt-2 border-t border-gray-100">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="age"
+                      className="text-sm font-medium text-gray-700"
+                    >
+                      Age *
+                    </Label>
                     <Input
-                      id="confirmPassword"
-                      type="password"
-                      placeholder="Confirm your password"
-                      value={formData.confirmPassword}
-                      onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
-                      className="pl-10 h-12"
-                      required={authMode === "signup"}
+                      id="age"
+                      type="number"
+                      placeholder="Age"
+                      value={formData.age}
+                      onChange={(e) => handleInputChange("age", e.target.value)}
+                      className="h-12 rounded-2xl border-gray-200 focus:border-blue-500 focus:ring-blue-500 transition-all duration-300"
+                      min="1"
+                      max="120"
+                      required
                       disabled={isLoading}
                     />
                   </div>
-                </div>
-              )}
-
-              {/* Patient-specific fields for signup */}
-              {authMode === "signup" && activeTab === "patient" && (
-                <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="age" className="text-sm font-medium">
-                        Age *
-                      </Label>
-                      <Input
-                        id="age"
-                        type="number"
-                        placeholder="Age"
-                        value={formData.age}
-                        onChange={(e) => handleInputChange("age", e.target.value)}
-                        className="h-12"
-                        min="1"
-                        max="120"
-                        required
-                        disabled={isLoading}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="gender" className="text-sm font-medium">
-                        Gender
-                      </Label>
-                      <Select
-                        value={formData.gender}
-                        onValueChange={(value) => handleInputChange("gender", value)}
-                        disabled={isLoading}
-                      >
-                        <SelectTrigger className="h-12">
-                          <SelectValue placeholder="Select gender" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="male">Male</SelectItem>
-                          <SelectItem value="female">Female</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
                   <div className="space-y-2">
-                    <Label htmlFor="phone" className="text-sm font-medium">
-                      Phone Number *
-                    </Label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="phone"
-                        type="tel"
-                        placeholder="+1 (555) 123-4567"
-                        value={formData.phone}
-                        onChange={(e) => handleInputChange("phone", e.target.value)}
-                        className="pl-10 h-12"
-                        required
-                        disabled={isLoading}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="address" className="text-sm font-medium">
-                      Address
-                    </Label>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="address"
-                        type="text"
-                        placeholder="Your address"
-                        value={formData.address}
-                        onChange={(e) => handleInputChange("address", e.target.value)}
-                        className="pl-10 h-12"
-                        disabled={isLoading}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="emergencyContact" className="text-sm font-medium">
-                      Emergency Contact
-                    </Label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="emergencyContact"
-                        type="tel"
-                        placeholder="Emergency contact number"
-                        value={formData.emergencyContact}
-                        onChange={(e) => handleInputChange("emergencyContact", e.target.value)}
-                        className="pl-10 h-12"
-                        disabled={isLoading}
-                      />
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {/* Doctor-specific fields for signup */}
-              {authMode === "signup" && activeTab === "doctor" && (
-                <>
-                  <div className="space-y-2">
-                    <Label htmlFor="specialization" className="text-sm font-medium">
-                      Medical Specialization *
+                    <Label
+                      htmlFor="gender"
+                      className="text-sm font-medium text-gray-700"
+                    >
+                      Gender
                     </Label>
                     <Select
-                      value={formData.specialization}
-                      onValueChange={(value) => handleInputChange("specialization", value)}
+                      value={formData.gender}
+                      onValueChange={(value) =>
+                        handleInputChange("gender", value)
+                      }
                       disabled={isLoading}
                     >
-                      <SelectTrigger className="h-12">
-                        <SelectValue placeholder="Select your specialization" />
+                      <SelectTrigger className="h-12 rounded-2xl border-gray-200 focus:border-blue-500 focus:ring-blue-500">
+                        <SelectValue placeholder="Select" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Internal Medicine">Internal Medicine</SelectItem>
-                        <SelectItem value="Cardiology">Cardiology</SelectItem>
-                        <SelectItem value="Dermatology">Dermatology</SelectItem>
-                        <SelectItem value="Neurology">Neurology</SelectItem>
-                        <SelectItem value="Pediatrics">Pediatrics</SelectItem>
-                        <SelectItem value="Psychiatry">Psychiatry</SelectItem>
-                        <SelectItem value="Emergency Medicine">Emergency Medicine</SelectItem>
-                        <SelectItem value="Family Medicine">Family Medicine</SelectItem>
-                        <SelectItem value="Orthopedics">Orthopedics</SelectItem>
-                        <SelectItem value="Radiology">Radiology</SelectItem>
+                        <SelectItem value="male">Male</SelectItem>
+                        <SelectItem value="female">Female</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
+                </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="licenseNumber" className="text-sm font-medium">
-                      Medical License Number *
-                    </Label>
-                    <div className="relative">
-                      <Shield className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="licenseNumber"
-                        type="text"
-                        placeholder="MD123456"
-                        value={formData.licenseNumber}
-                        onChange={(e) => handleInputChange("licenseNumber", e.target.value)}
-                        className="pl-10 h-12"
-                        required
-                        disabled={isLoading}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="hospital" className="text-sm font-medium">
-                      Hospital/Clinic *
-                    </Label>
-                    <div className="relative">
-                      <Stethoscope className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="hospital"
-                        type="text"
-                        placeholder="Your hospital or clinic"
-                        value={formData.hospital}
-                        onChange={(e) => handleInputChange("hospital", e.target.value)}
-                        className="pl-10 h-12"
-                        required
-                        disabled={isLoading}
-                      />
-                    </div>
-                  </div>
-                </>
-              )}
-
-              <Button
-                type="submit"
-                className={`w-full h-12 text-lg font-semibold ${
-                  activeTab === "patient"
-                    ? "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
-                    : "bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800"
-                }`}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    {authMode === "signin" ? "Signing In..." : "Creating Account..."}
-                  </>
-                ) : (
-                  <>
-                    {authMode === "signin" ? <User className="mr-2 h-5 w-5" /> : <UserPlus className="mr-2 h-5 w-5" />}
-                    {authMode === "signin" ? "Sign In" : "Create Account"}
-                  </>
-                )}
-              </Button>
-            </form>
-
-            <div className="text-center">
-              <Button variant="link" onClick={switchAuthMode} className="text-sm font-medium" disabled={isLoading}>
-                {authMode === "signin" ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
-              </Button>
-            </div>
-
-            <div className="space-y-4">
-              <Separator className="my-6" />
-              <div className="text-center">
-                <p className="text-sm text-gray-600 mb-4">Try our demo accounts</p>
-                <div className="grid grid-cols-2 gap-3">
-                  <Button
-                    variant="outline"
-                    onClick={() => handleDemoLogin("patient")}
-                    disabled={isLoading}
-                    className="h-12 border-blue-200 text-blue-700 hover:bg-blue-50"
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="phone"
+                    className="text-sm font-medium text-gray-700"
                   >
-                    {isLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <>
-                        <User className="mr-2 h-4 w-4" />
-                        Demo Patient
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => handleDemoLogin("doctor")}
-                    disabled={isLoading}
-                    className="h-12 border-teal-200 text-teal-700 hover:bg-teal-50"
-                  >
-                    {isLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <>
-                        <Stethoscope className="mr-2 h-4 w-4" />
-                        Demo Doctor
-                      </>
-                    )}
-                  </Button>
+                    Phone Number *
+                  </Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="+1 (555) 123-4567"
+                      value={formData.phone}
+                      onChange={(e) =>
+                        handleInputChange("phone", e.target.value)
+                      }
+                      className="pl-10 h-12 rounded-2xl border-gray-200 focus:border-blue-500 focus:ring-blue-500 transition-all duration-300"
+                      required
+                      disabled={isLoading}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            )}
 
-        <div className="text-center mt-6">
-          <p className="text-xs text-gray-500">By signing up, you agree to our Terms of Service and Privacy Policy</p>
-        </div>
+            {/* Doctor-specific fields for signup */}
+            {authMode === "signup" && activeTab === "doctor" && (
+              <div className="space-y-4 pt-2 border-t border-gray-100">
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="specialization"
+                    className="text-sm font-medium text-gray-700"
+                  >
+                    Medical Specialization *
+                  </Label>
+                  <Select
+                    value={formData.specialization}
+                    onValueChange={(value) =>
+                      handleInputChange("specialization", value)
+                    }
+                    disabled={isLoading}
+                  >
+                    <SelectTrigger className="h-12 rounded-2xl border-gray-200 focus:border-blue-500 focus:ring-blue-500">
+                      <SelectValue placeholder="Select specialization" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Internal Medicine">
+                        Internal Medicine
+                      </SelectItem>
+                      <SelectItem value="Cardiology">Cardiology</SelectItem>
+                      <SelectItem value="Dermatology">Dermatology</SelectItem>
+                      <SelectItem value="Neurology">Neurology</SelectItem>
+                      <SelectItem value="Pediatrics">Pediatrics</SelectItem>
+                      <SelectItem value="Psychiatry">Psychiatry</SelectItem>
+                      <SelectItem value="Emergency Medicine">
+                        Emergency Medicine
+                      </SelectItem>
+                      <SelectItem value="Family Medicine">
+                        Family Medicine
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="licenseNumber"
+                    className="text-sm font-medium text-gray-700"
+                  >
+                    Medical License Number *
+                  </Label>
+                  <div className="relative">
+                    <Shield className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="licenseNumber"
+                      type="text"
+                      placeholder="MD123456"
+                      value={formData.licenseNumber}
+                      onChange={(e) =>
+                        handleInputChange("licenseNumber", e.target.value)
+                      }
+                      className="pl-10 h-12 rounded-2xl border-gray-200 focus:border-blue-500 focus:ring-blue-500 transition-all duration-300"
+                      required
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="hospital"
+                    className="text-sm font-medium text-gray-700"
+                  >
+                    Hospital/Clinic *
+                  </Label>
+                  <div className="relative">
+                    <Stethoscope className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="hospital"
+                      type="text"
+                      placeholder="Your hospital or clinic"
+                      value={formData.hospital}
+                      onChange={(e) =>
+                        handleInputChange("hospital", e.target.value)
+                      }
+                      className="pl-10 h-12 rounded-2xl border-gray-200 focus:border-blue-500 focus:ring-blue-500 transition-all duration-300"
+                      required
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              className={`w-full h-14 text-lg font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 ${
+                activeTab === "patient"
+                  ? "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
+                  : "bg-gradient-to-r from-cyan-600 to-cyan-700 hover:from-cyan-700 hover:to-cyan-800"
+              }`}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  {authMode === "signin"
+                    ? "Signing In..."
+                    : "Creating Account..."}
+                </>
+              ) : (
+                <>
+                  {authMode === "signin" ? (
+                    <User className="mr-2 h-5 w-5" />
+                  ) : (
+                    <UserPlus className="mr-2 h-5 w-5" />
+                  )}
+                  {authMode === "signin" ? "Sign In" : "Create Account"}
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </>
+              )}
+            </Button>
+          </form>
+
+          <div className="text-center">
+            <Button
+              variant="link"
+              onClick={switchAuthMode}
+              className="text-sm font-medium text-gray-600 hover:text-gray-800"
+              disabled={isLoading}
+            >
+              {authMode === "signin"
+                ? "Don't have an account? Sign up"
+                : "Already have an account? Sign in"}
+            </Button>
+          </div>
+
+          <div className="space-y-4">
+            <Separator className="my-6" />
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <Sparkles className="h-4 w-4 text-yellow-500" />
+                <p className="text-sm text-gray-600 font-medium">
+                  Try our demo accounts
+                </p>
+                <Sparkles className="h-4 w-4 text-yellow-500" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => handleDemoLogin("patient")}
+                  disabled={isLoading}
+                  className="h-12 border-blue-200 text-blue-700 hover:bg-blue-50 rounded-2xl font-medium transition-all duration-300 transform hover:scale-105"
+                >
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <User className="mr-2 h-4 w-4" />
+                      Demo Patient
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => handleDemoLogin("doctor")}
+                  disabled={isLoading}
+                  className="h-12 border-cyan-200 text-cyan-700 hover:bg-cyan-50 rounded-2xl font-medium transition-all duration-300 transform hover:scale-105"
+                >
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Stethoscope className="mr-2 h-4 w-4" />
+                      Demo Doctor
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="text-center mt-6">
+        <p className="text-xs text-gray-500">
+          By signing up, you agree to our{" "}
+          <span className="text-blue-600 font-medium">Terms of Service</span>{" "}
+          and <span className="text-blue-600 font-medium">Privacy Policy</span>
+        </p>
       </div>
     </div>
-  )
+  );
 }
