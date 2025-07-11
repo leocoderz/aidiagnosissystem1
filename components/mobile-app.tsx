@@ -169,7 +169,7 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
           </div>
           <div className="flex items-center space-x-2">
             <div className="flex items-center space-x-1">
-              <Bluetooth className={`h-4 w-4 ${isConnected ? "text-green-300" : "text-red-300"}`} />
+                            <Bluetooth className={`h-4 w-4 ${isConnected ? "text-green-300" : "text-red-300"}`} />
               <Battery className="h-4 w-4" />
               <span className="text-xs">{batteryLevel}%</span>
             </div>
