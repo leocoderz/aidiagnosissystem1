@@ -487,3 +487,414 @@
     border: 2px solid rgba(0, 0, 0, 0.2);
   }
 }
+
+/* Advanced UI/UX Animations */
+@layer utilities {
+  /* Stagger animations for lists */
+  .animate-stagger-in {
+    animation: staggerIn 0.6s ease-out forwards;
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  .animate-stagger-in:nth-child(1) {
+    animation-delay: 0.1s;
+  }
+  .animate-stagger-in:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+  .animate-stagger-in:nth-child(3) {
+    animation-delay: 0.3s;
+  }
+  .animate-stagger-in:nth-child(4) {
+    animation-delay: 0.4s;
+  }
+  .animate-stagger-in:nth-child(5) {
+    animation-delay: 0.5s;
+  }
+
+  /* Pulse animations for vital signs */
+  .pulse-gentle {
+    animation: pulseGentle 2s ease-in-out infinite;
+  }
+
+  .pulse-heart {
+    animation: pulseHeart 1s ease-in-out infinite;
+  }
+
+  /* Slide in from different directions */
+  .slide-in-left {
+    animation: slideInLeft 0.5s ease-out forwards;
+    transform: translateX(-20px);
+    opacity: 0;
+  }
+
+  .slide-in-right {
+    animation: slideInRight 0.5s ease-out forwards;
+    transform: translateX(20px);
+    opacity: 0;
+  }
+
+  .slide-in-up {
+    animation: slideInUp 0.5s ease-out forwards;
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  .slide-in-down {
+    animation: slideInDown 0.5s ease-out forwards;
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+
+  /* Card animations */
+  .card-lift {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .card-lift:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Button micro-interactions */
+  .button-magnetic {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .button-magnetic::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition:
+      width 0.6s,
+      height 0.6s;
+  }
+
+  .button-magnetic:active::before {
+    width: 300px;
+    height: 300px;
+  }
+
+  /* Progress bar animations */
+  .progress-animated {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .progress-animated::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.4),
+      transparent
+    );
+    animation: shimmer 2s infinite;
+  }
+
+  /* Notification badges */
+  .notification-bounce {
+    animation: notificationBounce 0.6s ease-out forwards;
+  }
+
+  /* Tab switching animations */
+  .tab-content {
+    animation: tabFadeIn 0.3s ease-out forwards;
+  }
+
+  /* Skeleton loading improved */
+  .skeleton-pulse {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: skeletonLoading 1.5s infinite;
+  }
+
+  /* Floating elements */
+  .float-delayed {
+    animation: float 6s ease-in-out infinite;
+    animation-delay: 2s;
+  }
+
+  /* Glow effects */
+  .glow-blue {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+    animation: glowBlue 2s ease-in-out infinite alternate;
+  }
+
+  .glow-green {
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+    animation: glowGreen 2s ease-in-out infinite alternate;
+  }
+
+  .glow-red {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+    animation: glowRed 2s ease-in-out infinite alternate;
+  }
+
+  /* Interactive states */
+  .interactive-scale {
+    transition: transform 0.2s ease-out;
+  }
+
+  .interactive-scale:hover {
+    transform: scale(1.05);
+  }
+
+  .interactive-scale:active {
+    transform: scale(0.98);
+  }
+
+  /* Status indicators */
+  .status-online {
+    position: relative;
+  }
+
+  .status-online::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 12px;
+    height: 12px;
+    background: #10b981;
+    border: 2px solid white;
+    border-radius: 50%;
+    animation: statusPulse 2s infinite;
+  }
+
+  /* Modal animations */
+  .modal-overlay {
+    animation: modalOverlayIn 0.3s ease-out forwards;
+    opacity: 0;
+  }
+
+  .modal-content {
+    animation: modalContentIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    transform: scale(0.8) translateY(20px);
+    opacity: 0;
+  }
+}
+
+/* New keyframe animations */
+@keyframes staggerIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulseGentle {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+}
+
+@keyframes pulseHeart {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(1.1);
+  }
+  50% {
+    transform: scale(1);
+  }
+  75% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes slideInLeft {
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInDown {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+@keyframes notificationBounce {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes tabFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes skeletonLoading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes glowBlue {
+  from {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+  }
+  to {
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.6);
+  }
+}
+
+@keyframes glowGreen {
+  from {
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+  }
+  to {
+    box-shadow: 0 0 30px rgba(34, 197, 94, 0.6);
+  }
+}
+
+@keyframes glowRed {
+  from {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+  }
+  to {
+    box-shadow: 0 0 30px rgba(239, 68, 68, 0.6);
+  }
+}
+
+@keyframes statusPulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes modalOverlayIn {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modalContentIn {
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Enhanced responsive animations */
+@media (max-width: 768px) {
+  /* Reduced motion for mobile performance */
+  .card-lift:hover {
+    transform: translateY(-4px) scale(1.01);
+  }
+
+  /* Faster animations on mobile */
+  .animate-fade-in {
+    animation-duration: 0.4s;
+  }
+
+  .slide-in-up {
+    animation-duration: 0.3s;
+  }
+
+  /* Touch-friendly hover states */
+  @media (hover: none) {
+    .card-lift:hover {
+      transform: none;
+    }
+
+    .interactive-scale:hover {
+      transform: none;
+    }
+  }
+}
+
+/* Performance optimizations */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* GPU acceleration for better performance */
+.animate-fade-in,
+.slide-in-up,
+.slide-in-down,
+.slide-in-left,
+.slide-in-right,
+.card-lift,
+.interactive-scale {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
