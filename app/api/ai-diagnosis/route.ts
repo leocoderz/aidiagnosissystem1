@@ -2,21 +2,21 @@ import { generateText } from "ai";
 import { openai } from "@ai-sdk/openai";
 
 export async function POST(req: Request) {
+  const { symptoms, patientInfo } = await req.json();
+
+  if (!symptoms || symptoms.length === 0) {
+    return Response.json({
+      condition: "No symptoms provided",
+      confidence: 0,
+      severity: "mild",
+      explanation: "Please provide symptoms for analysis",
+      recommendations: ["Please provide symptoms for analysis"],
+      treatment: [],
+      seekImmediateCare: false,
+    });
+  }
+
   try {
-    const { symptoms, patientInfo } = await req.json();
-
-    if (!symptoms || symptoms.length === 0) {
-      return Response.json({
-        condition: "No symptoms provided",
-        confidence: 0,
-        severity: "mild",
-        explanation: "Please provide symptoms for analysis",
-        recommendations: ["Please provide symptoms for analysis"],
-        treatment: [],
-        seekImmediateCare: false,
-      });
-    }
-
     // Prepare detailed symptom information for AI analysis
     const symptomDetails = symptoms
       .map((symptom: any) => {
@@ -336,7 +336,7 @@ function generateRuleBasedDiagnosis(symptoms: any[]) {
         { condition: "Early pneumonia", probability: 5 },
       ],
       redFlags: [
-        "High fever over 103°F (39.4°C)",
+        "High fever over 103��F (39.4°C)",
         "Difficulty breathing",
         "Severe headache",
         "Chest pain",
