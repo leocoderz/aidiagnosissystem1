@@ -366,11 +366,12 @@ export default function SymptomInput({
       </Card>
 
       {/* Current Symptoms */}
-      <Card>
+      <Card className="border-0 bg-white shadow-lg">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-xl">
+              <CardTitle className="text-xl flex items-center">
+                <Stethoscope className="mr-3 h-5 w-5 text-green-600" />
                 Your Symptoms ({symptoms.length})
               </CardTitle>
               <CardDescription>
@@ -380,7 +381,7 @@ export default function SymptomInput({
             {symptoms.length > 0 && (
               <Button
                 onClick={handleGetDiagnosis}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
                 size="lg"
               >
                 <Brain className="h-4 w-4 mr-2" />
