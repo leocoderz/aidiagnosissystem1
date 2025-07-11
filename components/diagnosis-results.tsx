@@ -27,9 +27,6 @@ interface DiagnosisResultsProps {
 }
 
 export default function DiagnosisResults({ diagnosis }: DiagnosisResultsProps) {
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [diagnosis, setDiagnosis] = useState<any>(null);
-
   const analyzeSymptomsWithAI = async () => {
     if (symptoms.length === 0) return;
 
