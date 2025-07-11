@@ -331,22 +331,12 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
 
   return (
     <div className="w-full max-w-md mx-auto">
-      {/* Header */}
-      <div className="text-center mb-8">
-        <div className="flex items-center justify-center mb-6">
-          <div className="relative">
-            <div className="w-20 h-20 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-3xl flex items-center justify-center shadow-2xl">
-              <Heart className="h-10 w-10 text-white" />
-            </div>
-            <div className="absolute -top-2 -right-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
-              <CheckCircle2 className="h-4 w-4 text-white" />
-            </div>
-          </div>
-        </div>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-2">
-          SympCare24
+      {/* Simplified Header for Modal */}
+      <div className="text-center mb-6">
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-2">
+          Welcome Back
         </h1>
-        <p className="text-gray-600">Your AI-Powered Health Companion</p>
+        <p className="text-gray-600">Sign in to your SympCare24 account</p>
       </div>
 
       <Card className="shadow-2xl border-0 bg-white/90 backdrop-blur-sm">
