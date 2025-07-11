@@ -29,7 +29,6 @@ import {
   Shield,
   CheckCircle2,
   UserPlus,
-  Sparkles,
   ArrowRight,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -213,93 +212,6 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
       toast({
         title: "Error",
         description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDemoLogin = async (type: "patient" | "doctor") => {
-    setIsLoading(true);
-
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      const demoUsers = {
-        patient: {
-          id: "demo_patient_1",
-          email: "patient@demo.com",
-          name: "John Doe",
-          type: "patient" as const,
-          age: 32,
-          gender: "male" as const,
-          phone: "+1-555-0123",
-          address: "123 Main St, City, State 12345",
-          emergencyContact: "+1-555-0124",
-          avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=john",
-        },
-        doctor: {
-          id: "demo_doctor_1",
-          email: "doctor@demo.com",
-          name: "Dr. Sarah Wilson",
-          type: "doctor" as const,
-          specialization: "Internal Medicine",
-          licenseNumber: "MD123456",
-          hospital: "SympCare24 Medical Center",
-          avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=sarah",
-        },
-      };
-
-      const user = demoUsers[type];
-
-      if (type === "patient") {
-        const existingPatients = JSON.parse(
-          localStorage.getItem("mediai_all_patients") || "[]",
-        );
-        const patientData = {
-          ...user,
-          registrationDate: new Date().toISOString(),
-          healthScore: 85,
-          status: "stable",
-          symptoms: 0,
-          diagnoses: 0,
-          vitals: {
-            heartRate: 72,
-            bloodPressure: "120/80",
-            temperature: 98.6,
-            oxygenSaturation: 98,
-          },
-          alerts: 0,
-          conditions: [],
-          lastVisit: new Date().toISOString(),
-        };
-
-        const existingPatientIndex = existingPatients.findIndex(
-          (p: any) => p.email === user.email,
-        );
-        if (existingPatientIndex >= 0) {
-          existingPatients[existingPatientIndex] = patientData;
-        } else {
-          existingPatients.push(patientData);
-        }
-
-        localStorage.setItem(
-          "mediai_all_patients",
-          JSON.stringify(existingPatients),
-        );
-      }
-
-      toast({
-        title: "Demo Login Successful",
-        description: `Welcome to the ${type} demo experience!`,
-      });
-
-      onLogin(user);
-    } catch (error) {
-      toast({
-        title: "Demo Login Failed",
-        description: "Please try again",
         variant: "destructive",
       });
     } finally {
@@ -716,51 +628,6 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                 ? "Don't have an account? Sign up"
                 : "Already have an account? Sign in"}
             </Button>
-          </div>
-
-          <div className="space-y-4">
-            <Separator className="my-6" />
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-2 mb-4">
-                <Sparkles className="h-4 w-4 text-yellow-500" />
-                <p className="text-sm text-gray-600 font-medium">
-                  Try our demo accounts
-                </p>
-                <Sparkles className="h-4 w-4 text-yellow-500" />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => handleDemoLogin("patient")}
-                  disabled={isLoading}
-                  className="h-12 border-blue-200 text-blue-700 hover:bg-blue-50 rounded-2xl font-medium transition-all duration-300 transform hover:scale-105"
-                >
-                  {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <>
-                      <User className="mr-2 h-4 w-4" />
-                      Demo Patient
-                    </>
-                  )}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => handleDemoLogin("doctor")}
-                  disabled={isLoading}
-                  className="h-12 border-cyan-200 text-cyan-700 hover:bg-cyan-50 rounded-2xl font-medium transition-all duration-300 transform hover:scale-105"
-                >
-                  {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <>
-                      <Stethoscope className="mr-2 h-4 w-4" />
-                      Demo Doctor
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
           </div>
         </CardContent>
       </Card>
