@@ -264,3 +264,226 @@
   background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
   background-size: 200% 100%;
 }
+
+/* App-like animations and effects */
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 1s ease-out forwards;
+    opacity: 0;
+  }
+
+  .animate-fade-in.delay-300 {
+    animation-delay: 0.3s;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.6s ease-out forwards;
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.5s ease-out forwards;
+    transform: scale(0.9);
+    opacity: 0;
+  }
+
+  .animate-bounce-in {
+    animation: bounceIn 0.8s ease-out forwards;
+  }
+
+  /* Floating animation for app icons */
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  /* App-style card hover effects */
+  .card-hover {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .card-hover:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow:
+      0 20px 25px -5px rgba(0, 0, 0, 0.1),
+      0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+
+  /* Native app button styles */
+  .app-button {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: center;
+  }
+
+  .app-button:active {
+    transform: scale(0.95);
+  }
+
+  /* Status bar styles */
+  .status-bar {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    backdrop-filter: blur(20px);
+  }
+
+  /* App container styles */
+  .app-container {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+    position: relative;
+  }
+
+  /* Glassmorphism effect */
+  .glass {
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+  }
+
+  .glass-dark {
+    background: rgba(0, 0, 0, 0.25);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* Keyframes for new animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* App-specific responsive design */
+@media (max-width: 768px) {
+  /* Full-height mobile layout */
+  .mobile-full-height {
+    height: 100vh;
+    height: 100dvh; /* Dynamic viewport height for mobile browsers */
+  }
+
+  /* Touch-friendly button sizes */
+  .mobile-button {
+    min-height: 48px;
+    min-width: 48px;
+    font-size: 16px;
+  }
+
+  /* Mobile-optimized modals */
+  .mobile-modal {
+    border-radius: 24px 24px 0 0;
+    max-height: 90vh;
+  }
+
+  /* Safe area padding for mobile */
+  .mobile-safe-top {
+    padding-top: max(20px, env(safe-area-inset-top));
+  }
+
+  .mobile-safe-bottom {
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+  }
+}
+
+/* iOS-style transitions */
+.ios-transition {
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Material Design ripple effect */
+.ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple:before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  transform: translate(-50%, -50%);
+  transition:
+    width 0.6s,
+    height 0.6s;
+}
+
+.ripple:active:before {
+  width: 300px;
+  height: 300px;
+}
+
+/* Progressive Web App viewport fixes */
+@supports (-webkit-appearance: none) {
+  .ios-scroll {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .app-button {
+    border: 2px solid;
+  }
+
+  .glass {
+    background: rgba(255, 255, 255, 0.9);
+    border: 2px solid rgba(0, 0, 0, 0.2);
+  }
+}
