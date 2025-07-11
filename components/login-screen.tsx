@@ -1,0 +1,703 @@
+"use client"
+
+import type React from "react"
+import { useState } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
+import {
+  Phone,
+  Mail,
+  MapPin,
+  Loader2,
+  Heart,
+  Stethoscope,
+  User,
+  Lock,
+  Eye,
+  EyeOff,
+  Shield,
+  CheckCircle2,
+  UserPlus,
+} from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
+
+interface LoginUser {
+  id: string
+  email: string
+  name: string
+  avatar?: string
+  type: "patient" | "doctor"
+  age?: number
+  gender?: "male" | "female" | "other"
+  phone?: string
+  address?: string
+  emergencyContact?: string
+  medicalHistory?: string[]
+  specialization?: string
+  licenseNumber?: string
+  hospital?: string
+}
+
+interface LoginScreenProps {
+  onLogin: (user: LoginUser) => void
+}
+
+export default function LoginScreen({ onLogin }: LoginScreenProps) {
+  const [activeTab, setActiveTab] = useState("patient")
+  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin")
+  const [isLoading, setIsLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    confirmPassword: "",
+    name: "",
+    age: "",
+    gender: "",
+    phone: "",
+    address: "",
+    emergencyContact: "",
+    specialization: "",
+    licenseNumber: "",
+    hospital: "",
+  })
+  const { toast } = useToast()
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const generateUserId = () => {
+    return Date.now().toString() + Math.random().toString(36).substr(2, 9)
+  }
+
+  const validateForm = () => {
+    if (!formData.email || !formData.password) {
+      throw new Error("Email and password are required")
+    }
+
+    if (authMode === "signup") {
+      if (!formData.name) {
+        throw new Error("Full name is required")
+      }
+
+      if (formData.password !== formData.confirmPassword) {
+        throw new Error("Passwords do not match")
+      }
+
+      if (formData.password.length < 6) {
+        throw new Error("Password must be at least 6 characters")
+      }
+
+      if (activeTab === "patient") {
+        if (!formData.phone || !formData.age) {
+          throw new Error("Phone number and age are required for patients")
+        }
+        if (Number.parseInt(formData.age) < 1 || Number.parseInt(formData.age) > 120) {
+          throw new Error("Please enter a valid age")
+        }
+      }
+
+      if (activeTab === "doctor") {
+        if (!formData.specialization || !formData.licenseNumber || !formData.hospital) {
+          throw new Error("Specialization, license number, and hospital are required for doctors")
+        }
+      }
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(formData.email)) {
+      throw new Error("Please enter a valid email address")
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+
+    try {
+      validateForm()
+
+      // Simulate API call delay
+      await new Promise((resolve) => setTimeout(resolve, 1500))
+
+      const userId = generateUserId()
+      const user: LoginUser = {
+        id: userId,
+        email: formData.email,
+        name: formData.name || formData.email.split("@")[0],
+        type: activeTab as "patient" | "doctor",
+        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.name || formData.email}`,
+      }
+
+      if (activeTab === "patient") {
+        user.age = Number.parseInt(formData.age) || 25
+        user.gender = (formData.gender as "male" | "female" | "other") || "other"
+        user.phone = formData.phone
+        user.address = formData.address
+        user.emergencyContact = formData.emergencyContact
+        user.medicalHistory = []
+
+        // Save patient to the shared patients database
+        const existingPatients = JSON.parse(localStorage.getItem("mediai_all_patients") || "[]")
+        const patientData = {
+          ...user,
+          registrationDate: new Date().toISOString(),
+          healthScore: 85,
+          status: "stable",
+          symptoms: 0,
+          diagnoses: 0,
+          vitals: {
+            heartRate: 72,
+            bloodPressure: "120/80",
+            temperature: 98.6,
+            oxygenSaturation: 98,
+          },
+          alerts: 0,
+          conditions: [],
+          lastVisit: new Date().toISOString(),
+        }
+
+        const existingPatientIndex = existingPatients.findIndex((p: any) => p.email === user.email)
+        if (existingPatientIndex >= 0) {
+          existingPatients[existingPatientIndex] = patientData
+        } else {
+          existingPatients.push(patientData)
+        }
+
+        localStorage.setItem("mediai_all_patients", JSON.stringify(existingPatients))
+      } else {
+        user.specialization = formData.specialization
+        user.licenseNumber = formData.licenseNumber
+        user.hospital = formData.hospital
+      }
+
+      toast({
+        title: authMode === "signin" ? "Welcome Back!" : "Account Created Successfully!",
+        description: `${authMode === "signin" ? "Successfully signed in" : "Welcome to SympCare24"} as ${user.name}`,
+      })
+
+      onLogin(user)
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleDemoLogin = async (type: "patient" | "doctor") => {
+    setIsLoading(true)
+
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+
+      const demoUsers = {
+        patient: {
+          id: "demo_patient_1",
+          email: "patient@demo.com",
+          name: "John Doe",
+          type: "patient" as const,
+          age: 32,
+          gender: "male" as const,
+          phone: "+1-555-0123",
+          address: "123 Main St, City, State 12345",
+          emergencyContact: "+1-555-0124",
+          avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=john",
+        },
+        doctor: {
+          id: "demo_doctor_1",
+          email: "doctor@demo.com",
+          name: "Dr. Sarah Wilson",
+          type: "doctor" as const,
+          specialization: "Internal Medicine",
+          licenseNumber: "MD123456",
+          hospital: "SympCare24 Medical Center",
+          avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=sarah",
+        },
+      }
+
+      const user = demoUsers[type]
+
+      if (type === "patient") {
+        const existingPatients = JSON.parse(localStorage.getItem("mediai_all_patients") || "[]")
+        const patientData = {
+          ...user,
+          registrationDate: new Date().toISOString(),
+          healthScore: 85,
+          status: "stable",
+          symptoms: 0,
+          diagnoses: 0,
+          vitals: {
+            heartRate: 72,
+            bloodPressure: "120/80",
+            temperature: 98.6,
+            oxygenSaturation: 98,
+          },
+          alerts: 0,
+          conditions: [],
+          lastVisit: new Date().toISOString(),
+        }
+
+        const existingPatientIndex = existingPatients.findIndex((p: any) => p.email === user.email)
+        if (existingPatientIndex >= 0) {
+          existingPatients[existingPatientIndex] = patientData
+        } else {
+          existingPatients.push(patientData)
+        }
+
+        localStorage.setItem("mediai_all_patients", JSON.stringify(existingPatients))
+      }
+
+      onLogin(user)
+    } catch (error) {
+      toast({
+        title: "Demo Login Failed",
+        description: "Please try again",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const resetForm = () => {
+    setFormData({
+      email: "",
+      password: "",
+      confirmPassword: "",
+      name: "",
+      age: "",
+      gender: "",
+      phone: "",
+      address: "",
+      emergencyContact: "",
+      specialization: "",
+      licenseNumber: "",
+      hospital: "",
+    })
+  }
+
+  const switchAuthMode = () => {
+    setAuthMode(authMode === "signin" ? "signup" : "signin")
+    resetForm()
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-teal-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-700 flex items-center justify-center p-4">
+      <div className="w-full max-w-lg">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center mb-6">
+            <div className="relative">
+              <div className="w-20 h-20 bg-gradient-to-r from-blue-600 to-teal-600 rounded-3xl flex items-center justify-center shadow-2xl">
+                <Heart className="h-10 w-10 text-white" />
+              </div>
+              <div className="absolute -top-2 -right-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
+                <CheckCircle2 className="h-4 w-4 text-white" />
+              </div>
+            </div>
+          </div>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent mb-2">
+            SympCare24
+          </h1>
+          <p className="text-gray-600 dark:text-gray-300">Your AI-Powered Health Companion</p>
+        </div>
+
+        <Card className="shadow-2xl border-0 bg-white/80 backdrop-blur-sm">
+          <CardHeader className="space-y-4">
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="grid w-full grid-cols-2 bg-gray-100 dark:bg-gray-800">
+                <TabsTrigger
+                  value="patient"
+                  className="flex items-center gap-2 data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+                >
+                  <User className="h-4 w-4" />
+                  Patient
+                </TabsTrigger>
+                <TabsTrigger
+                  value="doctor"
+                  className="flex items-center gap-2 data-[state=active]:bg-teal-600 data-[state=active]:text-white"
+                >
+                  <Stethoscope className="h-4 w-4" />
+                  Doctor
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="patient">
+                <div className="text-center">
+                  <CardTitle className="text-2xl flex items-center justify-center gap-2">
+                    {authMode === "signin" ? "Welcome Back" : "Create Patient Account"}
+                    <Badge variant="outline" className="border-blue-200 text-blue-700 bg-blue-50">
+                      Patient
+                    </Badge>
+                  </CardTitle>
+                  <p className="text-sm text-gray-600 mt-2">
+                    {authMode === "signin" ? "Sign in to your patient account" : "Join our healthcare community"}
+                  </p>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="doctor">
+                <div className="text-center">
+                  <CardTitle className="text-2xl flex items-center justify-center gap-2">
+                    {authMode === "signin" ? "Welcome Back" : "Create Doctor Account"}
+                    <Badge variant="outline" className="border-teal-200 text-teal-700 bg-teal-50">
+                      Doctor
+                    </Badge>
+                  </CardTitle>
+                  <p className="text-sm text-gray-600 mt-2">
+                    {authMode === "signin" ? "Sign in to your doctor account" : "Join our medical professionals"}
+                  </p>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </CardHeader>
+
+          <CardContent className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {authMode === "signup" && (
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="text-sm font-medium">
+                    Full Name *
+                  </Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="name"
+                      type="text"
+                      placeholder="Enter your full name"
+                      value={formData.name}
+                      onChange={(e) => handleInputChange("name", e.target.value)}
+                      className="pl-10 h-12"
+                      required={authMode === "signup"}
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-medium">
+                  Email Address *
+                </Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Enter your email"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange("email", e.target.value)}
+                    className="pl-10 h-12"
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-sm font-medium">
+                  Password *
+                </Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your password"
+                    value={formData.password}
+                    onChange={(e) => handleInputChange("password", e.target.value)}
+                    className="pl-10 pr-10 h-12"
+                    required
+                    disabled={isLoading}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-1 top-1 h-10 w-10"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </div>
+
+              {authMode === "signup" && (
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword" className="text-sm font-medium">
+                    Confirm Password *
+                  </Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      placeholder="Confirm your password"
+                      value={formData.confirmPassword}
+                      onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
+                      className="pl-10 h-12"
+                      required={authMode === "signup"}
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Patient-specific fields for signup */}
+              {authMode === "signup" && activeTab === "patient" && (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="age" className="text-sm font-medium">
+                        Age *
+                      </Label>
+                      <Input
+                        id="age"
+                        type="number"
+                        placeholder="Age"
+                        value={formData.age}
+                        onChange={(e) => handleInputChange("age", e.target.value)}
+                        className="h-12"
+                        min="1"
+                        max="120"
+                        required
+                        disabled={isLoading}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="gender" className="text-sm font-medium">
+                        Gender
+                      </Label>
+                      <Select
+                        value={formData.gender}
+                        onValueChange={(value) => handleInputChange("gender", value)}
+                        disabled={isLoading}
+                      >
+                        <SelectTrigger className="h-12">
+                          <SelectValue placeholder="Select gender" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="male">Male</SelectItem>
+                          <SelectItem value="female">Female</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="phone" className="text-sm font-medium">
+                      Phone Number *
+                    </Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Input
+                        id="phone"
+                        type="tel"
+                        placeholder="+1 (555) 123-4567"
+                        value={formData.phone}
+                        onChange={(e) => handleInputChange("phone", e.target.value)}
+                        className="pl-10 h-12"
+                        required
+                        disabled={isLoading}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="address" className="text-sm font-medium">
+                      Address
+                    </Label>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Input
+                        id="address"
+                        type="text"
+                        placeholder="Your address"
+                        value={formData.address}
+                        onChange={(e) => handleInputChange("address", e.target.value)}
+                        className="pl-10 h-12"
+                        disabled={isLoading}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="emergencyContact" className="text-sm font-medium">
+                      Emergency Contact
+                    </Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Input
+                        id="emergencyContact"
+                        type="tel"
+                        placeholder="Emergency contact number"
+                        value={formData.emergencyContact}
+                        onChange={(e) => handleInputChange("emergencyContact", e.target.value)}
+                        className="pl-10 h-12"
+                        disabled={isLoading}
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Doctor-specific fields for signup */}
+              {authMode === "signup" && activeTab === "doctor" && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="specialization" className="text-sm font-medium">
+                      Medical Specialization *
+                    </Label>
+                    <Select
+                      value={formData.specialization}
+                      onValueChange={(value) => handleInputChange("specialization", value)}
+                      disabled={isLoading}
+                    >
+                      <SelectTrigger className="h-12">
+                        <SelectValue placeholder="Select your specialization" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Internal Medicine">Internal Medicine</SelectItem>
+                        <SelectItem value="Cardiology">Cardiology</SelectItem>
+                        <SelectItem value="Dermatology">Dermatology</SelectItem>
+                        <SelectItem value="Neurology">Neurology</SelectItem>
+                        <SelectItem value="Pediatrics">Pediatrics</SelectItem>
+                        <SelectItem value="Psychiatry">Psychiatry</SelectItem>
+                        <SelectItem value="Emergency Medicine">Emergency Medicine</SelectItem>
+                        <SelectItem value="Family Medicine">Family Medicine</SelectItem>
+                        <SelectItem value="Orthopedics">Orthopedics</SelectItem>
+                        <SelectItem value="Radiology">Radiology</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="licenseNumber" className="text-sm font-medium">
+                      Medical License Number *
+                    </Label>
+                    <div className="relative">
+                      <Shield className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Input
+                        id="licenseNumber"
+                        type="text"
+                        placeholder="MD123456"
+                        value={formData.licenseNumber}
+                        onChange={(e) => handleInputChange("licenseNumber", e.target.value)}
+                        className="pl-10 h-12"
+                        required
+                        disabled={isLoading}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="hospital" className="text-sm font-medium">
+                      Hospital/Clinic *
+                    </Label>
+                    <div className="relative">
+                      <Stethoscope className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Input
+                        id="hospital"
+                        type="text"
+                        placeholder="Your hospital or clinic"
+                        value={formData.hospital}
+                        onChange={(e) => handleInputChange("hospital", e.target.value)}
+                        className="pl-10 h-12"
+                        required
+                        disabled={isLoading}
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              <Button
+                type="submit"
+                className={`w-full h-12 text-lg font-semibold ${
+                  activeTab === "patient"
+                    ? "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
+                    : "bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800"
+                }`}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    {authMode === "signin" ? "Signing In..." : "Creating Account..."}
+                  </>
+                ) : (
+                  <>
+                    {authMode === "signin" ? <User className="mr-2 h-5 w-5" /> : <UserPlus className="mr-2 h-5 w-5" />}
+                    {authMode === "signin" ? "Sign In" : "Create Account"}
+                  </>
+                )}
+              </Button>
+            </form>
+
+            <div className="text-center">
+              <Button variant="link" onClick={switchAuthMode} className="text-sm font-medium" disabled={isLoading}>
+                {authMode === "signin" ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              <Separator className="my-6" />
+              <div className="text-center">
+                <p className="text-sm text-gray-600 mb-4">Try our demo accounts</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => handleDemoLogin("patient")}
+                    disabled={isLoading}
+                    className="h-12 border-blue-200 text-blue-700 hover:bg-blue-50"
+                  >
+                    {isLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <>
+                        <User className="mr-2 h-4 w-4" />
+                        Demo Patient
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => handleDemoLogin("doctor")}
+                    disabled={isLoading}
+                    className="h-12 border-teal-200 text-teal-700 hover:bg-teal-50"
+                  >
+                    {isLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Stethoscope className="mr-2 h-4 w-4" />
+                        Demo Doctor
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="text-center mt-6">
+          <p className="text-xs text-gray-500">By signing up, you agree to our Terms of Service and Privacy Policy</p>
+        </div>
+      </div>
+    </div>
+  )
+}
