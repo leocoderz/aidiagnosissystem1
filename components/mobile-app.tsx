@@ -20,6 +20,7 @@ import {
   TrendingUp,
   Bluetooth,
   Battery,
+  Pill,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import SymptomInput from "@/components/symptom-input";
@@ -27,6 +28,7 @@ import DiagnosisResults from "@/components/diagnosis-results";
 import TimelineTracker from "@/components/timeline-tracker";
 import WearableIntegration from "@/components/wearable-integration";
 import AISkinAssistant from "@/components/ai-skin-assistant";
+import TabletLookup from "@/components/tablet-lookup";
 
 interface MobileAppUser {
   id: string;
@@ -126,7 +128,7 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
 
       {/* Navigation Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5 rounded-none border-b">
+        <TabsList className="grid w-full grid-cols-6 rounded-none border-b">
           <TabsTrigger
             value="dashboard"
             className="flex flex-col items-center py-2"
@@ -140,6 +142,13 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
           >
             <Plus className="h-4 w-4" />
             <span className="text-xs mt-1">Symptoms</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="tablets"
+            className="flex flex-col items-center py-2"
+          >
+            <Pill className="h-4 w-4" />
+            <span className="text-xs mt-1">Tablets</span>
           </TabsTrigger>
           <TabsTrigger
             value="timeline"
@@ -283,6 +292,11 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
               <DiagnosisResults diagnosis={diagnosis} />
             </div>
           )}
+        </TabsContent>
+
+        {/* Tablets Tab */}
+        <TabsContent value="tablets" className="p-4">
+          <TabletLookup />
         </TabsContent>
 
         {/* Timeline Tab */}
