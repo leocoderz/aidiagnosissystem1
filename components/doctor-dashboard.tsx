@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Users,
   AlertTriangle,
@@ -19,140 +19,74 @@ import {
   LogOut,
   Stethoscope,
   TrendingUp,
-} from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
-import PatientHealthReport from "@/components/patient-health-report"
-import type { User as UserType } from "@/types/user" // Renamed to avoid redeclaration
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import PatientHealthReport from "@/components/patient-health-report";
+import type { User as UserType } from "@/types/user"; // Renamed to avoid redeclaration
 
 interface DoctorDashboardProps {
-  user: UserType
-  onLogout: () => void
+  user: UserType;
+  onLogout: () => void;
 }
 
 interface Patient {
-  id: string
-  name: string
-  age: number
-  gender: string
-  lastVisit: string
-  condition: string
-  severity: "Low" | "Medium" | "High" | "Critical"
+  id: string;
+  name: string;
+  age: number;
+  gender: string;
+  lastVisit: string;
+  condition: string;
+  severity: "Low" | "Medium" | "High" | "Critical";
   vitals: {
-    heartRate: number
-    bloodPressure: string
-    temperature: number
-    oxygenSaturation: number
-  }
-  symptoms: string[]
+    heartRate: number;
+    bloodPressure: string;
+    temperature: number;
+    oxygenSaturation: number;
+  };
+  symptoms: string[];
   aiDiagnosis?: {
-    condition: string
-    confidence: number
-    recommendations: string[]
-  }
+    condition: string;
+    confidence: number;
+    recommendations: string[];
+  };
 }
 
-export default function DoctorDashboard({ user, onLogout }: DoctorDashboardProps) {
-  const [activeTab, setActiveTab] = useState("overview")
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)
-  const [patients, setPatients] = useState<Patient[]>([
-    {
-      id: "P001",
-      name: "Alex Johnson",
-      age: 32,
-      gender: "Non-binary",
-      lastVisit: "2024-01-08",
-      condition: "Common Cold",
-      severity: "Low",
-      vitals: {
-        heartRate: 72,
-        bloodPressure: "120/80",
-        temperature: 98.6,
-        oxygenSaturation: 98,
-      },
-      symptoms: ["Runny nose", "Mild headache", "Fatigue"],
-      aiDiagnosis: {
-        condition: "Viral Upper Respiratory Infection",
-        confidence: 85,
-        recommendations: ["Rest and hydration", "Over-the-counter symptom relief", "Monitor for 3-5 days"],
-      },
-    },
-    {
-      id: "P002",
-      name: "Maria Garcia",
-      age: 45,
-      gender: "Female",
-      lastVisit: "2024-01-08",
-      condition: "Hypertension",
-      severity: "Medium",
-      vitals: {
-        heartRate: 88,
-        bloodPressure: "145/92",
-        temperature: 98.4,
-        oxygenSaturation: 97,
-      },
-      symptoms: ["Headache", "Dizziness", "Chest tightness"],
-      aiDiagnosis: {
-        condition: "Hypertensive Episode",
-        confidence: 92,
-        recommendations: [
-          "Blood pressure monitoring",
-          "Medication review",
-          "Lifestyle modifications",
-          "Follow-up in 1 week",
-        ],
-      },
-    },
-    {
-      id: "P003",
-      name: "Robert Chen",
-      age: 28,
-      gender: "Male",
-      lastVisit: "2024-01-07",
-      condition: "Anxiety",
-      severity: "Medium",
-      vitals: {
-        heartRate: 95,
-        bloodPressure: "130/85",
-        temperature: 98.2,
-        oxygenSaturation: 99,
-      },
-      symptoms: ["Rapid heartbeat", "Sweating", "Nervousness"],
-      aiDiagnosis: {
-        condition: "Anxiety Disorder",
-        confidence: 78,
-        recommendations: [
-          "Stress management techniques",
-          "Consider counseling",
-          "Monitor symptoms",
-          "Follow-up in 2 weeks",
-        ],
-      },
-    },
-  ])
-  const { toast } = useToast()
+export default function DoctorDashboard({
+  user,
+  onLogout,
+}: DoctorDashboardProps) {
+  const [activeTab, setActiveTab] = useState("overview");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const { toast } = useToast();
 
   const filteredPatients = patients.filter(
     (patient) =>
       patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       patient.condition.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+  );
 
-  const urgentCases = patients.filter((p) => p.severity === "High" || p.severity === "Critical")
+  const urgentCases = patients.filter(
+    (p) => p.severity === "High" || p.severity === "Critical",
+  );
 
-  const handlePatientContact = (patient: Patient, method: "call" | "sms" | "email") => {
+  const handlePatientContact = (
+    patient: Patient,
+    method: "call" | "sms" | "email",
+  ) => {
     toast({
       title: `Contacting ${patient.name}`,
       description: `Initiating ${method} communication...`,
-    })
-  }
+    });
+  };
 
   const stats = {
     totalPatients: patients.length,
     urgentCases: urgentCases.length,
     totalSymptoms: patients.reduce((acc, p) => acc + p.symptoms.length, 0),
     aiDiagnoses: patients.filter((p) => p.aiDiagnosis).length,
-  }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -193,7 +127,9 @@ export default function DoctorDashboard({ user, onLogout }: DoctorDashboardProps
               <CardContent className="p-4 text-center">
                 <Users className="h-8 w-8 text-blue-500 mx-auto mb-2" />
                 <div className="text-2xl font-bold">{stats.totalPatients}</div>
-                <div className="text-sm text-muted-foreground">Total Patients</div>
+                <div className="text-sm text-muted-foreground">
+                  Total Patients
+                </div>
               </CardContent>
             </Card>
 
@@ -201,7 +137,9 @@ export default function DoctorDashboard({ user, onLogout }: DoctorDashboardProps
               <CardContent className="p-4 text-center">
                 <AlertTriangle className="h-8 w-8 text-red-500 mx-auto mb-2" />
                 <div className="text-2xl font-bold">{stats.urgentCases}</div>
-                <div className="text-sm text-muted-foreground">Urgent Cases</div>
+                <div className="text-sm text-muted-foreground">
+                  Urgent Cases
+                </div>
               </CardContent>
             </Card>
 
@@ -209,7 +147,9 @@ export default function DoctorDashboard({ user, onLogout }: DoctorDashboardProps
               <CardContent className="p-4 text-center">
                 <Activity className="h-8 w-8 text-green-500 mx-auto mb-2" />
                 <div className="text-2xl font-bold">{stats.totalSymptoms}</div>
-                <div className="text-sm text-muted-foreground">Total Symptoms</div>
+                <div className="text-sm text-muted-foreground">
+                  Total Symptoms
+                </div>
               </CardContent>
             </Card>
 
@@ -217,7 +157,9 @@ export default function DoctorDashboard({ user, onLogout }: DoctorDashboardProps
               <CardContent className="p-4 text-center">
                 <TrendingUp className="h-8 w-8 text-purple-500 mx-auto mb-2" />
                 <div className="text-2xl font-bold">{stats.aiDiagnoses}</div>
-                <div className="text-sm text-muted-foreground">AI Diagnoses</div>
+                <div className="text-sm text-muted-foreground">
+                  AI Diagnoses
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -230,14 +172,19 @@ export default function DoctorDashboard({ user, onLogout }: DoctorDashboardProps
             <CardContent>
               <div className="space-y-4">
                 {patients.slice(0, 3).map((patient) => (
-                  <div key={patient.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div
+                    key={patient.id}
+                    className="flex items-center justify-between p-3 border rounded-lg"
+                  >
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
                         <User className="h-5 w-5" />
                       </div>
                       <div>
                         <div className="font-semibold">{patient.name}</div>
-                        <div className="text-sm text-muted-foreground">{patient.condition}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {patient.condition}
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -254,7 +201,10 @@ export default function DoctorDashboard({ user, onLogout }: DoctorDashboardProps
                       >
                         {patient.severity}
                       </Badge>
-                      <Button size="sm" onClick={() => setSelectedPatient(patient)}>
+                      <Button
+                        size="sm"
+                        onClick={() => setSelectedPatient(patient)}
+                      >
                         View
                       </Button>
                     </div>
@@ -293,7 +243,9 @@ export default function DoctorDashboard({ user, onLogout }: DoctorDashboardProps
                         <div className="text-sm text-muted-foreground">
                           {patient.age} years • {patient.gender}
                         </div>
-                        <div className="text-sm text-muted-foreground">Last visit: {patient.lastVisit}</div>
+                        <div className="text-sm text-muted-foreground">
+                          Last visit: {patient.lastVisit}
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -311,13 +263,25 @@ export default function DoctorDashboard({ user, onLogout }: DoctorDashboardProps
                         {patient.severity}
                       </Badge>
                       <div className="flex space-x-1">
-                        <Button size="sm" variant="outline" onClick={() => handlePatientContact(patient, "call")}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handlePatientContact(patient, "call")}
+                        >
                           <Phone className="h-4 w-4" />
                         </Button>
-                        <Button size="sm" variant="outline" onClick={() => handlePatientContact(patient, "sms")}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handlePatientContact(patient, "sms")}
+                        >
                           <MessageSquare className="h-4 w-4" />
                         </Button>
-                        <Button size="sm" variant="outline" onClick={() => handlePatientContact(patient, "email")}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handlePatientContact(patient, "email")}
+                        >
                           <Mail className="h-4 w-4" />
                         </Button>
                       </div>
@@ -328,19 +292,29 @@ export default function DoctorDashboard({ user, onLogout }: DoctorDashboardProps
                   <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div>
                       <div className="text-muted-foreground">Heart Rate</div>
-                      <div className="font-semibold">{patient.vitals.heartRate} BPM</div>
+                      <div className="font-semibold">
+                        {patient.vitals.heartRate} BPM
+                      </div>
                     </div>
                     <div>
-                      <div className="text-muted-foreground">Blood Pressure</div>
-                      <div className="font-semibold">{patient.vitals.bloodPressure}</div>
+                      <div className="text-muted-foreground">
+                        Blood Pressure
+                      </div>
+                      <div className="font-semibold">
+                        {patient.vitals.bloodPressure}
+                      </div>
                     </div>
                     <div>
                       <div className="text-muted-foreground">Temperature</div>
-                      <div className="font-semibold">{patient.vitals.temperature}°F</div>
+                      <div className="font-semibold">
+                        {patient.vitals.temperature}°F
+                      </div>
                     </div>
                     <div>
                       <div className="text-muted-foreground">SpO2</div>
-                      <div className="font-semibold">{patient.vitals.oxygenSaturation}%</div>
+                      <div className="font-semibold">
+                        {patient.vitals.oxygenSaturation}%
+                      </div>
                     </div>
                   </div>
 
@@ -348,10 +322,16 @@ export default function DoctorDashboard({ user, onLogout }: DoctorDashboardProps
                   {patient.aiDiagnosis && (
                     <div className="mt-4 p-3 bg-muted rounded-lg">
                       <div className="flex items-center justify-between mb-2">
-                        <div className="font-semibold text-sm">AI Diagnosis</div>
-                        <Badge variant="secondary">{patient.aiDiagnosis.confidence}% confidence</Badge>
+                        <div className="font-semibold text-sm">
+                          AI Diagnosis
+                        </div>
+                        <Badge variant="secondary">
+                          {patient.aiDiagnosis.confidence}% confidence
+                        </Badge>
                       </div>
-                      <div className="text-sm">{patient.aiDiagnosis.condition}</div>
+                      <div className="text-sm">
+                        {patient.aiDiagnosis.condition}
+                      </div>
                     </div>
                   )}
                 </CardContent>
@@ -364,13 +344,17 @@ export default function DoctorDashboard({ user, onLogout }: DoctorDashboardProps
         <TabsContent value="urgent" className="p-4 space-y-4">
           <div className="flex items-center space-x-2 mb-4">
             <AlertTriangle className="h-5 w-5 text-red-500" />
-            <h2 className="text-lg font-semibold">Urgent Cases Requiring Attention</h2>
+            <h2 className="text-lg font-semibold">
+              Urgent Cases Requiring Attention
+            </h2>
           </div>
 
           {urgentCases.length === 0 ? (
             <Card>
               <CardContent className="p-8 text-center">
-                <div className="text-muted-foreground">No urgent cases at this time</div>
+                <div className="text-muted-foreground">
+                  No urgent cases at this time
+                </div>
               </CardContent>
             </Card>
           ) : (
@@ -385,8 +369,12 @@ export default function DoctorDashboard({ user, onLogout }: DoctorDashboardProps
                         </div>
                         <div>
                           <div className="font-semibold">{patient.name}</div>
-                          <div className="text-sm text-muted-foreground">{patient.condition}</div>
-                          <div className="text-sm text-red-600">Severity: {patient.severity}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {patient.condition}
+                          </div>
+                          <div className="text-sm text-red-600">
+                            Severity: {patient.severity}
+                          </div>
                         </div>
                       </div>
                       <div className="flex space-x-2">
@@ -422,13 +410,17 @@ export default function DoctorDashboard({ user, onLogout }: DoctorDashboardProps
             <Card>
               <CardContent className="p-8 text-center">
                 <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <div className="text-muted-foreground mb-4">Select a patient to generate medical reports</div>
-                <Button onClick={() => setActiveTab("patients")}>View Patients</Button>
+                <div className="text-muted-foreground mb-4">
+                  Select a patient to generate medical reports
+                </div>
+                <Button onClick={() => setActiveTab("patients")}>
+                  View Patients
+                </Button>
               </CardContent>
             </Card>
           )}
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }
