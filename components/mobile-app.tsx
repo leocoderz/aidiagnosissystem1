@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Heart,
   Activity,
@@ -18,50 +18,50 @@ import {
   LogOut,
   Plus,
   TrendingUp,
-    Bluetooth,
+  Bluetooth,
   Battery,
   Pill,
-} from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
-import SymptomInput from "@/components/symptom-input"
-import DiagnosisResults from "@/components/diagnosis-results"
-import TimelineTracker from "@/components/timeline-tracker"
-import WearableIntegration from "@/components/wearable-integration"
-import AISkinAssistant from "@/components/ai-skin-assistant"
-import TabletLookup from "@/components/tablet-lookup"
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import SymptomInput from "@/components/symptom-input";
+import DiagnosisResults from "@/components/diagnosis-results";
+import TimelineTracker from "@/components/timeline-tracker";
+import WearableIntegration from "@/components/wearable-integration";
+import AISkinAssistant from "@/components/ai-skin-assistant";
+import TabletLookup from "@/components/tablet-lookup";
 
 interface MobileAppUser {
-  id: string
-  email: string
-  name: string
-  avatar?: string
-  type: "patient" | "doctor"
-  age?: number
-  gender?: "male" | "female" | "other"
-  phone?: string
-  address?: string
-  emergencyContact?: string
-  medicalHistory?: string[]
+  id: string;
+  email: string;
+  name: string;
+  avatar?: string;
+  type: "patient" | "doctor";
+  age?: number;
+  gender?: "male" | "female" | "other";
+  phone?: string;
+  address?: string;
+  emergencyContact?: string;
+  medicalHistory?: string[];
 }
 
 interface MobileAppProps {
-  user: MobileAppUser
-  onLogout: () => void
+  user: MobileAppUser;
+  onLogout: () => void;
 }
 
 interface VitalSigns {
-  heartRate: number
-  bloodPressure: string
-  temperature: number
-  oxygenSaturation: number
-  steps: number
-  calories: number
-  stressLevel: number
+  heartRate: number;
+  bloodPressure: string;
+  temperature: number;
+  oxygenSaturation: number;
+  steps: number;
+  calories: number;
+  stressLevel: number;
 }
 
 export default function MobileApp({ user, onLogout }: MobileAppProps) {
-  const [activeTab, setActiveTab] = useState("dashboard")
-    const [vitalSigns, setVitalSigns] = useState<VitalSigns>({
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const [vitalSigns, setVitalSigns] = useState<VitalSigns>({
     heartRate: 0,
     bloodPressure: "--/--",
     temperature: 0,
@@ -69,89 +69,88 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
     steps: 0,
     calories: 0,
     stressLevel: 0,
-  })
-  const [symptoms, setSymptoms] = useState<string[]>([])
-  const [diagnosis, setDiagnosis] = useState<any>(null)
-    const [isConnected, setIsConnected] = useState(false)
-  const [batteryLevel, setBatteryLevel] = useState(0)
-  const { toast } = useToast()
+  });
+  const [symptoms, setSymptoms] = useState<string[]>([]);
+  const [diagnosis, setDiagnosis] = useState<any>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [batteryLevel, setBatteryLevel] = useState(0);
+  const { toast } = useToast();
 
-    // Note: Connect real wearable devices for live data
+  // Note: Connect real wearable devices for live data
 
-      const handleSymptomSubmit = (symptomData: any) => {
-    setSymptoms((prev) => [...prev, symptomData.symptom])
+  const handleSymptomSubmit = (symptomData: any) => {
+    setSymptoms((prev) => [...prev, symptomData.symptom]);
     toast({
       title: "Symptoms Recorded",
       description: "Your symptoms have been recorded for analysis.",
-    })
-  }
+    });
+  };
 
   const handleDiagnosisRequest = async (symptoms: any[]) => {
     if (symptoms.length === 0) {
       toast({
         title: "No symptoms provided",
         description: "Please add symptoms before requesting diagnosis",
-        variant: "destructive"
-      })
-      return
+        variant: "destructive",
+      });
+      return;
     }
 
     try {
-      setDiagnosis(null) // Clear previous diagnosis
+      setDiagnosis(null); // Clear previous diagnosis
 
       // Show loading toast
       toast({
         title: "AI Analysis in Progress",
         description: "Analyzing your symptoms with advanced AI...",
-      })
+      });
 
-      const response = await fetch('/api/ai-diagnosis', {
-        method: 'POST',
+      const response = await fetch("/api/ai-diagnosis", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           symptoms: symptoms,
           patientInfo: {
             age: user.age,
             gender: user.gender,
-            medicalHistory: user.medicalHistory || []
-          }
+            medicalHistory: user.medicalHistory || [],
+          },
         }),
-      })
+      });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const diagnosisResult = await response.json()
-      setDiagnosis(diagnosisResult)
+      const diagnosisResult = await response.json();
+      setDiagnosis(diagnosisResult);
 
       toast({
         title: "AI Diagnosis Complete",
-        description: `Analysis complete: ${diagnosisResult.condition}",
-      })
+        description: `Analysis complete: ${diagnosisResult.condition}`,
+      });
 
       // Switch to dashboard to show results
-      setActiveTab("dashboard")
-
+      setActiveTab("dashboard");
     } catch (error) {
-      console.error('Diagnosis error:', error)
+      console.error("Diagnosis error:", error);
       toast({
         title: "Diagnosis Failed",
         description: "Unable to analyze symptoms. Please try again.",
-        variant: "destructive"
-      })
+        variant: "destructive",
+      });
     }
-  }
+  };
 
   const handleEmergency = () => {
     toast({
       title: "Emergency Alert Activated",
       description: "Emergency services have been notified.",
       variant: "destructive",
-    })
-  }
+    });
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -164,12 +163,16 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
             </div>
             <div>
               <h1 className="font-semibold">{user.name}</h1>
-              <p className="text-sm opacity-90">Patient ID: {user.id.slice(-6)}</p>
+              <p className="text-sm opacity-90">
+                Patient ID: {user.id.slice(-6)}
+              </p>
             </div>
           </div>
-                    <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2">
             <div className="flex items-center space-x-1">
-              <Bluetooth className={`h-4 w-4 ${isConnected ? "text-green-300" : "text-red-300"}`} />
+              <Bluetooth
+                className={`h-4 w-4 ${isConnected ? "text-green-300" : "text-red-300"}`}
+              />
               <Battery className="h-4 w-4" />
               <span className="text-xs">{batteryLevel}%</span>
             </div>
@@ -182,24 +185,39 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
 
       {/* Navigation Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-6 rounded-none border-b">
-          <TabsTrigger value="dashboard" className="flex flex-col items-center py-2">
+        <TabsList className="grid w-full grid-cols-6 rounded-none border-b">
+          <TabsTrigger
+            value="dashboard"
+            className="flex flex-col items-center py-2"
+          >
             <Activity className="h-4 w-4" />
             <span className="text-xs mt-1">Dashboard</span>
           </TabsTrigger>
-          <TabsTrigger value="symptoms" className="flex flex-col items-center py-2">
+          <TabsTrigger
+            value="symptoms"
+            className="flex flex-col items-center py-2"
+          >
             <Plus className="h-4 w-4" />
             <span className="text-xs mt-1">Symptoms</span>
           </TabsTrigger>
-          <TabsTrigger value="tablets" className="flex flex-col items-center py-2">
+          <TabsTrigger
+            value="tablets"
+            className="flex flex-col items-center py-2"
+          >
             <Pill className="h-4 w-4" />
             <span className="text-xs mt-1">Tablets</span>
           </TabsTrigger>
-          <TabsTrigger value="timeline" className="flex flex-col items-center py-2">
+          <TabsTrigger
+            value="timeline"
+            className="flex flex-col items-center py-2"
+          >
             <Clock className="h-4 w-4" />
             <span className="text-xs mt-1">Timeline</span>
           </TabsTrigger>
-          <TabsTrigger value="devices" className="flex flex-col items-center py-2">
+          <TabsTrigger
+            value="devices"
+            className="flex flex-col items-center py-2"
+          >
             <Bluetooth className="h-4 w-4" />
             <span className="text-xs mt-1">Devices</span>
           </TabsTrigger>
@@ -214,10 +232,39 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
           {/* Emergency Button */}
           <Card className="border-red-200 bg-red-50 dark:bg-red-950">
             <CardContent className="p-4">
-              <Button variant="destructive" className="w-full" size="lg" onClick={handleEmergency}>
+              <Button
+                variant="destructive"
+                className="w-full"
+                size="lg"
+                onClick={handleEmergency}
+              >
                 <AlertTriangle className="mr-2 h-5 w-5" />
                 Emergency Alert
               </Button>
+            </CardContent>
+          </Card>
+
+          {/* Device Connection Status */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Bluetooth className="mr-2 h-5 w-5" />
+                Device Status
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <span>Wearable Device</span>
+                <Badge variant={isConnected ? "default" : "destructive"}>
+                  {isConnected ? "Connected" : "Not Connected"}
+                </Badge>
+              </div>
+              {!isConnected && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  Connect a real Bluetooth/WiFi device to see live vital signs
+                  data.
+                </p>
+              )}
             </CardContent>
           </Card>
 
@@ -226,7 +273,9 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
             <Card>
               <CardContent className="p-4 text-center">
                 <Heart className="h-8 w-8 text-red-500 mx-auto mb-2" />
-                <div className="text-2xl font-bold">{vitalSigns.heartRate}</div>
+                <div className="text-2xl font-bold">
+                  {vitalSigns.heartRate || "--"}
+                </div>
                 <div className="text-sm text-muted-foreground">BPM</div>
               </CardContent>
             </Card>
@@ -234,7 +283,9 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
             <Card>
               <CardContent className="p-4 text-center">
                 <Droplets className="h-8 w-8 text-blue-500 mx-auto mb-2" />
-                <div className="text-2xl font-bold">{vitalSigns.oxygenSaturation}%</div>
+                <div className="text-2xl font-bold">
+                  {vitalSigns.oxygenSaturation || "--"}%
+                </div>
                 <div className="text-sm text-muted-foreground">SpO2</div>
               </CardContent>
             </Card>
@@ -242,7 +293,9 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
             <Card>
               <CardContent className="p-4 text-center">
                 <Thermometer className="h-8 w-8 text-orange-500 mx-auto mb-2" />
-                <div className="text-2xl font-bold">{vitalSigns.temperature}°F</div>
+                <div className="text-2xl font-bold">
+                  {vitalSigns.temperature || "--"}°F
+                </div>
                 <div className="text-sm text-muted-foreground">Temperature</div>
               </CardContent>
             </Card>
@@ -250,37 +303,13 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
             <Card>
               <CardContent className="p-4 text-center">
                 <TrendingUp className="h-8 w-8 text-green-500 mx-auto mb-2" />
-                <div className="text-2xl font-bold">{vitalSigns.steps}</div>
+                <div className="text-2xl font-bold">
+                  {vitalSigns.steps || "--"}
+                </div>
                 <div className="text-sm text-muted-foreground">Steps</div>
               </CardContent>
             </Card>
           </div>
-
-          {/* Stress Level */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center">
-                <Zap className="mr-2 h-5 w-5" />
-                Stress Level
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span>Current Level</span>
-                  <span className="font-semibold">{vitalSigns.stressLevel}%</span>
-                </div>
-                <Progress value={vitalSigns.stressLevel} className="h-2" />
-                <div className="text-sm text-muted-foreground">
-                  {vitalSigns.stressLevel < 30
-                    ? "Low stress"
-                    : vitalSigns.stressLevel < 70
-                      ? "Moderate stress"
-                      : "High stress"}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
 
           {/* Recent Diagnosis */}
           {diagnosis && (
@@ -292,19 +321,30 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="font-semibold">{diagnosis.condition}</span>
-                    <Badge variant={diagnosis.severity === "Mild" ? "secondary" : "destructive"}>
+                    <Badge
+                      variant={
+                        diagnosis.severity === "mild"
+                          ? "secondary"
+                          : "destructive"
+                      }
+                    >
                       {diagnosis.severity}
                     </Badge>
                   </div>
-                  <div className="text-sm text-muted-foreground">Confidence: {diagnosis.confidence}%</div>
+                  <div className="text-sm text-muted-foreground">
+                    Confidence: {diagnosis.confidence}%
+                  </div>
                   <Progress value={diagnosis.confidence} className="h-1" />
+                  <div className="mt-4">
+                    <DiagnosisResults diagnosis={diagnosis} />
+                  </div>
                 </div>
               </CardContent>
             </Card>
           )}
         </TabsContent>
 
-                        {/* Symptoms Tab */}
+        {/* Symptoms Tab */}
         <TabsContent value="symptoms" className="p-4">
           <SymptomInput
             onDiagnosisRequest={handleDiagnosisRequest}
@@ -315,14 +355,9 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
               duration: "unknown",
               location: "unknown",
               description: s,
-              timestamp: new Date().toISOString()
+              timestamp: new Date().toISOString(),
             }))}
           />
-          {diagnosis && (
-            <div className="mt-6">
-              <DiagnosisResults diagnosis={diagnosis} />
-            </div>
-          )}
         </TabsContent>
 
         {/* Tablets Tab */}
@@ -346,5 +381,5 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }
