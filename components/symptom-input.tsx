@@ -354,8 +354,12 @@ export default function SymptomInput({
             )}
           </div>
 
-          <Button onClick={handleAddSymptom} className="w-full" size="lg">
-            <Plus className="h-4 w-4 mr-2" />
+          <Button
+            onClick={handleAddSymptom}
+            className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+            size="lg"
+          >
+            <Plus className="h-5 w-5 mr-2" />
             Add Symptom
           </Button>
         </CardContent>
