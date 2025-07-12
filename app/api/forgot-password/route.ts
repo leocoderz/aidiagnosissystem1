@@ -282,20 +282,23 @@ export async function PATCH(request: NextRequest) {
 
     // Send confirmation email
     try {
-      await fetch(new URL("/api/send-email", "http://localhost:3000"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      await fetch(
+        `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/send-email`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: resetData.email,
+            name: resetData.email.split("@")[0],
+            type: "patient",
+            isWelcome: false,
+            isPasswordReset: false,
+            isPasswordChanged: true,
+          }),
         },
-        body: JSON.stringify({
-          email: resetData.email,
-          name: resetData.email.split("@")[0],
-          type: "patient",
-          isWelcome: false,
-          isPasswordReset: false,
-          isPasswordChanged: true,
-        }),
-      });
+      );
     } catch (emailError) {
       console.error("Error sending confirmation email:", emailError);
     }
