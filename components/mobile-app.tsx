@@ -106,7 +106,66 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
   const [isDetectingDevices, setIsDetectingDevices] = useState(false);
   const [notifications, setNotifications] = useState(2);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [fitbitConnected, setFitbitConnected] = useState(false);
+  const [isConnectingFitbit, setIsConnectingFitbit] = useState(false);
   const { toast } = useToast();
+
+  // Check for Fitbit OAuth callback parameters
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const fitbitConnected = urlParams.get("fitbit_connected");
+    const accessToken = urlParams.get("access_token");
+    const refreshToken = urlParams.get("refresh_token");
+    const userId = urlParams.get("user_id");
+    const expiresIn = urlParams.get("expires_in");
+    const fitbitError = urlParams.get("fitbit_error");
+
+    if (fitbitConnected === "true" && accessToken) {
+      // Store Fitbit tokens
+      localStorage.setItem("fitbit_access_token", accessToken);
+      localStorage.setItem("fitbit_refresh_token", refreshToken || "");
+      localStorage.setItem("fitbit_user_id", userId || "");
+      localStorage.setItem(
+        "fitbit_token_expiry",
+        (Date.now() + parseInt(expiresIn || "3600") * 1000).toString(),
+      );
+
+      setFitbitConnected(true);
+
+      toast({
+        title: "Fitbit Connected!",
+        description: "Successfully connected to your Fitbit account.",
+      });
+
+      // Clean up URL parameters
+      window.history.replaceState({}, document.title, window.location.pathname);
+
+      // Detect devices after connection
+      detectRealDevices();
+    } else if (fitbitError) {
+      toast({
+        title: "Fitbit Connection Failed",
+        description: `Error: ${fitbitError.replace("_", " ")}`,
+        variant: "destructive",
+      });
+
+      // Clean up URL parameters
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
+  // Check existing Fitbit connection on mount
+  useEffect(() => {
+    const accessToken = localStorage.getItem("fitbit_access_token");
+    const tokenExpiry = localStorage.getItem("fitbit_token_expiry");
+
+    if (accessToken && tokenExpiry) {
+      const isExpired = Date.now() > parseInt(tokenExpiry);
+      if (!isExpired) {
+        setFitbitConnected(true);
+      }
+    }
+  }, []);
 
   // Clear existing users and detect real devices on initialization
   useEffect(() => {
@@ -181,7 +240,30 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
         if (!connectedDevice) return;
 
         // Get real vitals data from the connected device
-        const realVitalsData = await getRealVitalsFromDevice(connectedDevice);
+        let realVitalsData;
+        try {
+          realVitalsData = await getRealVitalsFromDevice(connectedDevice);
+        } catch (vitalsError: any) {
+          console.error("Error getting vitals:", vitalsError);
+
+          // Handle specific error types
+          if (vitalsError.message?.includes("Bluetooth not available")) {
+            toast({
+              title: "Bluetooth Not Available",
+              description: "Use Fitbit Web API for device data instead.",
+              variant: "default",
+            });
+          } else if (vitalsError.message?.includes("Fitbit token expired")) {
+            setFitbitConnected(false);
+            localStorage.removeItem("fitbit_access_token");
+            toast({
+              title: "Fitbit Token Expired",
+              description: "Please reconnect your Fitbit account.",
+              variant: "destructive",
+            });
+          }
+          return; // Skip this iteration
+        }
 
         // Only update if we actually received real data
         if (
