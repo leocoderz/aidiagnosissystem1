@@ -453,22 +453,18 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
 
               <Card
                 className="border-0 bg-gradient-to-br from-purple-50 to-pink-50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer"
-                onClick={() => {
-                  toast({
-                    title: "Appointment Booking",
-                    description:
-                      "Appointment booking feature coming soon. Please call our clinic at (555) 123-4567.",
-                  });
-                }}
+                onClick={() => setActiveTab("ai")}
               >
                 <CardContent className="p-6 text-center">
                   <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                    <Calendar className="h-8 w-8 text-white" />
+                    <Sparkles className="h-8 w-8 text-white" />
                   </div>
                   <h4 className="font-semibold text-gray-800 mb-1">
-                    Book Appointment
+                    AI Skin Analysis
                   </h4>
-                  <p className="text-xs text-gray-600">Schedule with doctor</p>
+                  <p className="text-xs text-gray-600">
+                    Visual health assessment
+                  </p>
                 </CardContent>
               </Card>
             </div>
