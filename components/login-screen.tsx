@@ -55,10 +55,8 @@ interface LoginScreenProps {
 }
 
 export default function LoginScreen({ onLogin }: LoginScreenProps) {
-  const [activeTab, setActiveTab] = useState("patient");
-  const [authMode, setAuthMode] = useState<"signin" | "signup" | "forgot">(
-    "signin",
-  );
+    const [activeTab, setActiveTab] = useState("patient");
+  const [authMode, setAuthMode] = useState<"signin" | "signup" | "forgot">("signin");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [forgotPasswordSent, setForgotPasswordSent] = useState(false);
@@ -86,7 +84,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
     return Date.now().toString() + Math.random().toString(36).substr(2, 9);
   };
 
-  const validateForm = () => {
+    const validateForm = () => {
     if (authMode === "forgot") {
       if (!formData.email) {
         throw new Error("Email address is required");
@@ -179,7 +177,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
     localStorage.setItem("sympcare24_users", JSON.stringify(existingUsers));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
@@ -379,7 +377,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
     }
   };
 
-  const resetForm = () => {
+    const resetForm = () => {
     setFormData({
       email: "",
       password: "",
@@ -415,7 +413,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
 
   return (
     <div className="w-full max-w-md mx-auto">
-      {/* Simplified Header for Modal */}
+            {/* Simplified Header for Modal */}
       <div className="text-center mb-6">
         <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-2">
           {authMode === "forgot" ? "Reset Password" : "Welcome Back"}
@@ -423,7 +421,8 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
         <p className="text-gray-600">
           {authMode === "forgot"
             ? "Enter your email to receive a password reset link"
-            : "Sign in to your SympCare24 account"}
+            : "Sign in to your SympCare24 account"
+          }
         </p>
       </div>
 
@@ -447,14 +446,15 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="patient" className="mt-6">
+                        <TabsContent value="patient" className="mt-6">
               <div className="text-center">
                 <CardTitle className="text-2xl flex items-center justify-center gap-2 mb-2">
                   {authMode === "forgot"
                     ? "Password Reset"
                     : authMode === "signin"
-                      ? "Welcome Back"
-                      : "Join SympCare24"}
+                    ? "Welcome Back"
+                    : "Join SympCare24"
+                  }
                   <Badge
                     variant="outline"
                     className="border-blue-200 text-blue-700 bg-blue-50 rounded-full"
@@ -466,20 +466,21 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                   {authMode === "forgot"
                     ? "Reset your patient account password"
                     : authMode === "signin"
-                      ? "Sign in to your patient account"
-                      : "Create your patient account"}
+                    ? "Sign in to your patient account"
+                    : "Create your patient account"}
                 </p>
               </div>
             </TabsContent>
 
-            <TabsContent value="doctor" className="mt-6">
+                        <TabsContent value="doctor" className="mt-6">
               <div className="text-center">
                 <CardTitle className="text-2xl flex items-center justify-center gap-2 mb-2">
                   {authMode === "forgot"
                     ? "Password Reset"
                     : authMode === "signin"
-                      ? "Welcome Back"
-                      : "Join Our Team"}
+                    ? "Welcome Back"
+                    : "Join Our Team"
+                  }
                   <Badge
                     variant="outline"
                     className="border-cyan-200 text-cyan-700 bg-cyan-50 rounded-full"
@@ -491,16 +492,51 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                   {authMode === "forgot"
                     ? "Reset your doctor account password"
                     : authMode === "signin"
-                      ? "Sign in to your doctor account"
-                      : "Join our medical professionals"}
+                    ? "Sign in to your doctor account"
+                    : "Join our medical professionals"}
                 </p>
               </div>
             </TabsContent>
           </Tabs>
         </CardHeader>
 
-        <CardContent className="space-y-6">
-          <form onSubmit={handleSubmit} className="space-y-5">
+                <CardContent className="space-y-6">
+          {/* Forgot Password Success Message */}
+          {authMode === "forgot" && forgotPasswordSent ? (
+            <div className="text-center space-y-4">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                <CheckCircle2 className="h-8 w-8 text-green-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                  Reset Link Sent!
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  We've sent a password reset link to <strong>{formData.email}</strong>
+                </p>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left">
+                  <p className="text-sm text-blue-800 font-medium mb-2">Next Steps:</p>
+                  <ul className="text-sm text-blue-700 space-y-1">
+                    <li>• Check your email inbox</li>
+                    <li>• Click the reset link in the email</li>
+                    <li>• The link will expire in 24 hours</li>
+                    <li>• Check spam folder if not found</li>
+                  </ul>
+                </div>
+              </div>
+              <Button
+                onClick={() => {
+                  setAuthMode("signin");
+                  resetForm();
+                }}
+                variant="outline"
+                className="w-full"
+              >
+                Back to Login
+              </Button>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-5">
             {authMode === "signup" && (
               <div className="space-y-2">
                 <Label
