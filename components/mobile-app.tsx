@@ -95,11 +95,13 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
   });
   const [symptoms, setSymptoms] = useState<string[]>([]);
   const [diagnosis, setDiagnosis] = useState<any>(null);
-  const [isConnected, setIsConnected] = useState(true);
-  const [batteryLevel, setBatteryLevel] = useState(78);
-  const [deviceName, setDeviceName] = useState("Apple Watch Series 9");
-  const [lastSync, setLastSync] = useState(new Date().toISOString());
+  const [isConnected, setIsConnected] = useState(false);
+  const [batteryLevel, setBatteryLevel] = useState(0);
+  const [deviceName, setDeviceName] = useState("No Device");
+  const [lastSync, setLastSync] = useState("");
   const [vitalsAlerts, setVitalsAlerts] = useState<any[]>([]);
+  const [realDevices, setRealDevices] = useState<RealWearableDevice[]>([]);
+  const [isDetectingDevices, setIsDetectingDevices] = useState(false);
   const [notifications, setNotifications] = useState(2);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
