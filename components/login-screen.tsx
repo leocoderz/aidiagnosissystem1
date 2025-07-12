@@ -450,7 +450,11 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
             <TabsContent value="patient" className="mt-6">
               <div className="text-center">
                 <CardTitle className="text-2xl flex items-center justify-center gap-2 mb-2">
-                  {authMode === "signin" ? "Welcome Back" : "Join SympCare24"}
+                  {authMode === "forgot"
+                    ? "Password Reset"
+                    : authMode === "signin"
+                      ? "Welcome Back"
+                      : "Join SympCare24"}
                   <Badge
                     variant="outline"
                     className="border-blue-200 text-blue-700 bg-blue-50 rounded-full"
@@ -459,9 +463,11 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                   </Badge>
                 </CardTitle>
                 <p className="text-sm text-gray-600">
-                  {authMode === "signin"
-                    ? "Sign in to your patient account"
-                    : "Create your patient account"}
+                  {authMode === "forgot"
+                    ? "Reset your patient account password"
+                    : authMode === "signin"
+                      ? "Sign in to your patient account"
+                      : "Create your patient account"}
                 </p>
               </div>
             </TabsContent>
