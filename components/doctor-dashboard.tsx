@@ -228,6 +228,7 @@ export default function DoctorDashboard({
     urgentCases: urgentCases.length,
     totalSymptoms: patients.reduce((acc, p) => acc + p.symptoms.length, 0),
     aiDiagnoses: patients.filter((p) => p.aiDiagnosis).length,
+    realDevicePatients: patients.filter((p) => p.vitals?.lastUpdated).length,
   };
 
   const getTimeOfDay = () => {
