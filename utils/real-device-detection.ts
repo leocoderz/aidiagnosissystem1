@@ -55,6 +55,7 @@ export async function detectBluetoothDevices(): Promise<RealWearableDevice[]> {
         name: device.name || "Unknown Device",
         type: getDeviceType(device.name || ""),
         isConnected: device.gatt?.connected || false,
+        connectionType: "bluetooth",
         capabilities: await getDeviceCapabilities(device),
         lastSync: new Date().toISOString(),
       };
