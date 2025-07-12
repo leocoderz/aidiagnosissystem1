@@ -546,7 +546,10 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
 
         {/* Enhanced Timeline Tab */}
         <TabsContent value="timeline" className="p-6 animate-fade-in">
-          <TimelineTracker symptoms={symptoms} />
+          <TimelineTracker
+            symptoms={symptoms}
+            diagnosisHistory={diagnosis ? [diagnosis] : []}
+          />
         </TabsContent>
 
         {/* Enhanced Devices Tab */}
@@ -556,7 +559,7 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
 
         {/* Enhanced AI Assistant Tab */}
         <TabsContent value="ai" className="p-6 animate-fade-in">
-          <AISkinAssistant />
+          <AISkinAssistant userId={user.id} />
         </TabsContent>
       </Tabs>
     </div>
