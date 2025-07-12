@@ -106,9 +106,72 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
 
-  // Simulate real-time vitals monitoring
+  // Clear existing users and detect real devices on initialization
   useEffect(() => {
-    if (!isConnected) return;
+    const initializeRealDevicesOnly = async () => {
+      // Clear all existing users and simulated data
+      resetToRealDevicesOnly();
+
+      toast({
+        title: "System Reset",
+        description: "All existing users cleared. Showing only real devices.",
+      });
+
+      // Detect real wearable devices
+      await detectRealDevices();
+    };
+
+    initializeRealDevicesOnly();
+  }, []);
+
+  // Real device detection
+  const detectRealDevices = async () => {
+    setIsDetectingDevices(true);
+
+    try {
+      const devices = await detectAllRealDevices();
+      setRealDevices(devices);
+
+      if (devices.length > 0) {
+        const connectedDevice =
+          devices.find((d) => d.isConnected) || devices[0];
+        setIsConnected(connectedDevice.isConnected);
+        setDeviceName(connectedDevice.name);
+        setBatteryLevel(connectedDevice.batteryLevel || 0);
+        setLastSync(connectedDevice.lastSync || "");
+
+        toast({
+          title: "Real Device Detected",
+          description: `Found ${connectedDevice.name}`,
+        });
+      } else {
+        setIsConnected(false);
+        setDeviceName("No Real Device Found");
+        setBatteryLevel(0);
+        setLastSync("");
+
+        toast({
+          title: "No Real Devices",
+          description:
+            "No wearable devices detected. Connect a real device to start monitoring.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error detecting devices:", error);
+      toast({
+        title: "Device Detection Failed",
+        description: "Unable to detect wearable devices. Check permissions.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDetectingDevices(false);
+    }
+  };
+
+  // Real-time vitals monitoring (only if real device connected)
+  useEffect(() => {
+    if (!isConnected || realDevices.length === 0) return;
 
     const vitalsInterval = setInterval(() => {
       // Simulate realistic vital signs with minor variations
