@@ -77,15 +77,32 @@ export default function WearableIntegration({
   }, []);
 
   const checkDeviceSupport = async () => {
+    // Check if running in secure context (HTTPS required for Bluetooth)
+    const isSecureContext = window.isSecureContext;
+
     // Check Bluetooth support
-    if ("bluetooth" in navigator) {
-      setBluetoothSupported(true);
+    if ("bluetooth" in navigator && isSecureContext) {
       try {
+        // Check if Bluetooth is available in permissions policy
+        const permissionStatus = await navigator.permissions?.query?.({
+          name: "bluetooth" as any,
+        });
+        if (permissionStatus?.state === "denied") {
+          console.warn("Bluetooth access is denied by permissions policy");
+          setBluetoothSupported(false);
+          return;
+        }
+
+        setBluetoothSupported(true);
         const available = await (navigator as any).bluetooth.getAvailability();
         setBluetoothEnabled(available);
       } catch (error) {
         console.log("Bluetooth availability check failed:", error);
+        setBluetoothSupported(false);
       }
+    } else {
+      console.log("Bluetooth not supported: Missing API or insecure context");
+      setBluetoothSupported(false);
     }
 
     // Check WiFi support (limited in browsers)
@@ -97,17 +114,35 @@ export default function WearableIntegration({
 
   const requestBluetoothPermission = async () => {
     if (!bluetoothSupported) {
+      const reason = !window.isSecureContext
+        ? "Bluetooth requires HTTPS connection"
+        : "Your browser doesn't support Bluetooth connectivity";
+
       toast({
-        title: "Bluetooth Not Supported",
-        description: "Your browser doesn't support Bluetooth connectivity",
+        title: "Bluetooth Not Available",
+        description: reason,
         variant: "destructive",
       });
       return;
     }
 
     try {
+      // Check if we're in a secure context
+      if (!window.isSecureContext) {
+        throw new Error("Bluetooth requires HTTPS");
+      }
+
+      // Request device with specific filters to avoid permission policy issues
       const device = await (navigator as any).bluetooth.requestDevice({
-        acceptAllDevices: true,
+        filters: [
+          { services: ["heart_rate"] },
+          { services: ["battery_service"] },
+          { services: ["device_information"] },
+          { name: "Heart Rate Monitor" },
+          { namePrefix: "Polar" },
+          { namePrefix: "Garmin" },
+          { namePrefix: "Fitbit" },
+        ],
         optionalServices: [
           "heart_rate",
           "battery_service",
@@ -124,11 +159,27 @@ export default function WearableIntegration({
       });
 
       return device;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Bluetooth permission denied:", error);
+
+      let errorMessage = "Bluetooth access was denied";
+
+      if (error.message?.includes("permissions policy")) {
+        errorMessage =
+          "Bluetooth is disabled by security policy. Please enable in browser settings.";
+      } else if (error.message?.includes("HTTPS")) {
+        errorMessage = "Bluetooth requires a secure HTTPS connection";
+      } else if (error.name === "NotFoundError") {
+        errorMessage =
+          "No compatible Bluetooth devices found. Make sure device is in pairing mode.";
+      } else if (error.name === "SecurityError") {
+        errorMessage =
+          "Bluetooth access blocked by security policy or permissions";
+      }
+
       toast({
-        title: "Permission Denied",
-        description: "Bluetooth access was denied",
+        title: "Bluetooth Access Failed",
+        description: errorMessage,
         variant: "destructive",
       });
     }
@@ -143,6 +194,11 @@ export default function WearableIntegration({
     setIsBluetoothScanning(true);
 
     try {
+      // Check if getDevices method is available
+      if (!(navigator as any).bluetooth.getDevices) {
+        throw new Error("getDevices method not available");
+      }
+
       // Get already paired devices
       const devices = await (navigator as any).bluetooth.getDevices();
 
@@ -161,11 +217,21 @@ export default function WearableIntegration({
         title: "Scan Complete",
         description: `Found ${deviceList.length} paired device(s)`,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Bluetooth scan failed:", error);
+
+      let errorMessage = "Failed to scan for Bluetooth devices";
+
+      if (error.message?.includes("getDevices")) {
+        errorMessage = "Device scanning not supported in this browser version";
+      } else if (error.name === "SecurityError") {
+        errorMessage =
+          "Permission required. Please grant Bluetooth access first.";
+      }
+
       toast({
         title: "Scan Failed",
-        description: "Failed to scan for Bluetooth devices",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -344,8 +410,9 @@ export default function WearableIntegration({
               <Alert>
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>
-                  Bluetooth is not supported in your current browser. Try using
-                  Chrome, Edge, or Opera.
+                  {!window.isSecureContext
+                    ? "Bluetooth requires HTTPS connection. Please access this page via HTTPS or localhost."
+                    : "Bluetooth is not supported in your current browser. Try using Chrome, Edge, or Opera with HTTPS."}
                 </AlertDescription>
               </Alert>
             )}
