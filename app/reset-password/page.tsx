@@ -58,6 +58,11 @@ export default function ResetPasswordPage() {
   const verifyToken = async (resetToken: string) => {
     try {
       const response = await fetch(`/api/forgot-password?token=${resetToken}`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
       const data = await response.json();
 
       if (response.ok && data.success) {
