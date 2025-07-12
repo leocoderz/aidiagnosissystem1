@@ -426,13 +426,20 @@ export default function DoctorDashboard({
       {/* Enhanced Navigation */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="bg-white border-b border-gray-100 sticky top-0 z-40 backdrop-blur-sm bg-white/90">
-          <TabsList className="grid w-full grid-cols-4 h-16 bg-transparent rounded-none border-0">
+          <TabsList className="grid w-full grid-cols-5 h-16 bg-transparent rounded-none border-0">
             <TabsTrigger
               value="overview"
               className="flex flex-col items-center py-2 data-[state=active]:bg-green-50 data-[state=active]:text-green-600 rounded-2xl mx-1 transition-all duration-300"
             >
               <BarChart3 className="h-5 w-5 mb-1" />
               <span className="text-xs font-medium">Overview</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="predictions"
+              className="flex flex-col items-center py-2 data-[state=active]:bg-purple-50 data-[state=active]:text-purple-600 rounded-2xl mx-1 transition-all duration-300"
+            >
+              <Brain className="h-5 w-5 mb-1" />
+              <span className="text-xs font-medium">Predictions</span>
             </TabsTrigger>
             <TabsTrigger
               value="patients"
@@ -450,7 +457,7 @@ export default function DoctorDashboard({
             </TabsTrigger>
             <TabsTrigger
               value="reports"
-              className="flex flex-col items-center py-2 data-[state=active]:bg-purple-50 data-[state=active]:text-purple-600 rounded-2xl mx-1 transition-all duration-300"
+              className="flex flex-col items-center py-2 data-[state=active]:bg-orange-50 data-[state=active]:text-orange-600 rounded-2xl mx-1 transition-all duration-300"
             >
               <FileText className="h-5 w-5 mb-1" />
               <span className="text-xs font-medium">Reports</span>
