@@ -587,7 +587,7 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
         </TabsContent>
 
         {/* Enhanced Symptoms Tab */}
-        <TabsContent value="symptoms" className="p-6 animate-fade-in">
+        <TabsContent value="symptoms" className="p-6 animate-fade-in space-y-6">
           <SymptomInput
             onDiagnosisRequest={handleDiagnosisRequest}
             currentSymptoms={symptoms.map((s, index) => ({
@@ -600,6 +600,16 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
               timestamp: new Date().toISOString(),
             }))}
           />
+
+          {/* Show diagnosis results if available */}
+          {diagnosis && (
+            <div className="mt-6">
+              <h3 className="text-lg font-bold text-gray-800 mb-4">
+                AI Analysis Results
+              </h3>
+              <DiagnosisResults diagnosis={diagnosis} />
+            </div>
+          )}
         </TabsContent>
 
         {/* Enhanced Tablets Tab */}
