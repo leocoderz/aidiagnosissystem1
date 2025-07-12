@@ -375,7 +375,10 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
           </div>
 
           {/* Device Status Banner */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+          <div
+            className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20 cursor-pointer hover:bg-white/20 transition-all duration-300"
+            onClick={toggleDeviceConnection}
+          >
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <div
@@ -384,17 +387,26 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
                 <div>
                   <p className="text-sm font-medium">
                     {isConnected
-                      ? "Health Device Connected"
+                      ? `${deviceName} Connected`
                       : "No Device Connected"}
                   </p>
                   <p className="text-xs text-white/70">
                     {isConnected
-                      ? `Battery: ${batteryLevel}%`
-                      : "Pair a device for real-time monitoring"}
+                      ? `Battery: ${batteryLevel}% • Last sync: ${new Date(lastSync).toLocaleTimeString()}`
+                      : "Tap to pair a device for real-time monitoring"}
                   </p>
                 </div>
               </div>
-              <ChevronRight className="h-5 w-5 text-white/60" />
+              <div className="flex items-center space-x-2">
+                {vitalsAlerts.length > 0 && (
+                  <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+                    <span className="text-xs font-bold text-white">
+                      {vitalsAlerts.length}
+                    </span>
+                  </div>
+                )}
+                <ChevronRight className="h-5 w-5 text-white/60" />
+              </div>
             </div>
           </div>
         </div>
