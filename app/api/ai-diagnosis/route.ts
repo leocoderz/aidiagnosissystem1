@@ -204,6 +204,15 @@ function parseEnhancedAIResponse(
   let icdCode = "";
   const clinicalEvidence: string[] = [];
   const followUpPlan: string[] = [];
+  const diseasePredictions: Array<{
+    disease: string;
+    riskScore: number;
+    timeline: string;
+    preventionMeasures: string[];
+    earlyWarningSignsForDisease: string[];
+  }> = [];
+  const predictiveInsights: string[] = [];
+  const riskFactors: string[] = [];
 
   // Enhanced parsing logic
   let currentSection = "";
@@ -269,6 +278,18 @@ function parseEnhancedAIResponse(
       upperLine.includes("SUPPORTING")
     ) {
       currentSection = "evidence";
+    } else if (
+      upperLine.includes("DISEASE PREDICTION") ||
+      upperLine.includes("RISK ASSESSMENT")
+    ) {
+      currentSection = "prediction";
+    } else if (
+      upperLine.includes("PREDICTIVE INSIGHTS") ||
+      upperLine.includes("PHYSICIANS")
+    ) {
+      currentSection = "insights";
+    } else if (upperLine.includes("RISK FACTORS")) {
+      currentSection = "riskfactors";
     }
 
     // Parse content based on current section
@@ -311,6 +332,29 @@ function parseEnhancedAIResponse(
             break;
           case "evidence":
             clinicalEvidence.push(content);
+            break;
+          case "prediction":
+            // Parse disease prediction entries
+            const riskMatch = content.match(/(\d+)%/);
+            const timelineMatch = content.match(
+              /(?:in|within)\s+(\d+(?:-\d+)?\s*(?:days?|weeks?|months?|years?))/i,
+            );
+            const diseaseName = content.split("(")[0].split("-")[0].trim();
+            if (diseaseName && riskMatch) {
+              diseasePredictions.push({
+                disease: diseaseName,
+                riskScore: Number.parseInt(riskMatch[1]),
+                timeline: timelineMatch ? timelineMatch[1] : "Variable",
+                preventionMeasures: [],
+                earlyWarningSignsForDisease: [],
+              });
+            }
+            break;
+          case "insights":
+            predictiveInsights.push(content);
+            break;
+          case "riskfactors":
+            riskFactors.push(content);
             break;
         }
       }
@@ -406,10 +450,14 @@ function parseEnhancedAIResponse(
     prevention: prevention.slice(0, 6),
     clinicalEvidence: clinicalEvidence.slice(0, 4),
     followUpPlan: followUpPlan.slice(0, 4),
+    diseasePredictions: diseasePredictions.slice(0, 5),
+    predictiveInsights: predictiveInsights.slice(0, 6),
+    riskFactors: riskFactors.slice(0, 5),
     seekImmediateCare,
     aiGenerated: true,
     timestamp: new Date().toISOString(),
     analysisQuality: "enhanced",
+    predictionGenerated: true,
   };
 }
 
