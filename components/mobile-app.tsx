@@ -173,24 +173,58 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
   useEffect(() => {
     if (!isConnected || realDevices.length === 0) return;
 
-    const vitalsInterval = setInterval(() => {
-      // Simulate realistic vital signs with minor variations
-      const newVitals: VitalSigns = {
-        heartRate: Math.floor(Math.random() * 20) + 65, // 65-85 BPM
-        bloodPressure: `${Math.floor(Math.random() * 30) + 110}/${Math.floor(Math.random() * 20) + 70}`,
-        temperature: parseFloat((Math.random() * 2 + 97.5).toFixed(1)), // 97.5-99.5°F
-        oxygenSaturation: Math.floor(Math.random() * 5) + 96, // 96-100%
-        steps: vitalSigns.steps + Math.floor(Math.random() * 10),
-        calories: vitalSigns.calories + Math.floor(Math.random() * 5),
-        stressLevel: Math.floor(Math.random() * 40) + 20, // 20-60
-      };
+    const vitalsInterval = setInterval(async () => {
+      try {
+        const connectedDevice = realDevices.find((d) => d.isConnected);
+        if (!connectedDevice) return;
 
-      setVitalSigns(newVitals);
-      setLastSync(new Date().toISOString());
+        // Get real vitals data from the connected device
+        const realVitalsData = await getRealVitalsFromDevice(connectedDevice);
 
-      // Send vitals to monitoring API
-      sendVitalsToMonitoring(newVitals);
-    }, 30000); // Update every 30 seconds
+        // Update vitals with real data
+        const newVitals: VitalSigns = {
+          heartRate: realVitalsData.heartRate || 0,
+          bloodPressure: realVitalsData.bloodPressure || "--/--",
+          temperature: realVitalsData.temperature || 0,
+          oxygenSaturation: realVitalsData.oxygenSaturation || 0,
+          steps: realVitalsData.steps || 0,
+          calories: realVitalsData.calories || 0,
+          stressLevel: realVitalsData.stressLevel || 0,
+        };
+
+        setVitalSigns(newVitals);
+        setLastSync(new Date().toISOString());
+
+        // Send real vitals to monitoring API
+        sendVitalsToMonitoring(newVitals);
+
+        toast({
+          title: "Vitals Updated",
+          description: `Real data from ${connectedDevice.name}`,
+        });
+      } catch (error) {
+        console.error("Error getting real vitals:", error);
+
+        // If we can't get real data, show zeros
+        const emptyVitals: VitalSigns = {
+          heartRate: 0,
+          bloodPressure: "--/--",
+          temperature: 0,
+          oxygenSaturation: 0,
+          steps: 0,
+          calories: 0,
+          stressLevel: 0,
+        };
+
+        setVitalSigns(emptyVitals);
+
+        toast({
+          title: "Unable to Read Device",
+          description: "Could not get real vitals data from device",
+          variant: "destructive",
+        });
+      }
+    }, 60000); // Update every 60 seconds for real devices
 
     return () => clearInterval(vitalsInterval);
   }, [isConnected, user.id]);
