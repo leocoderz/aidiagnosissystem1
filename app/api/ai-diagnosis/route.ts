@@ -546,12 +546,21 @@ function createEmergencyDiagnosis(
   age: number,
   gender: string,
 ) {
+  const emergencyPredictions = getEmergencyDiseasePredictions(
+    symptomText,
+    age,
+    gender,
+  );
+
   return {
     condition: condition,
     confidence: 90,
     severity: "critical",
     icdCode: "R06.02", // Example ICD code
     explanation: `Based on the symptom presentation, this appears to be a serious medical condition requiring immediate evaluation. The combination of symptoms suggests potential ${condition.toLowerCase()} which requires urgent medical intervention.`,
+    diseasePredictions: emergencyPredictions.predictions,
+    predictiveInsights: emergencyPredictions.insights,
+    riskFactors: emergencyPredictions.riskFactors,
     recommendations: [
       "IMMEDIATE EMERGENCY MEDICAL CARE - Call 911 or go to nearest Emergency Department",
       "Do not delay seeking medical attention",
@@ -607,6 +616,7 @@ function createEmergencyDiagnosis(
     aiGenerated: false,
     timestamp: new Date().toISOString(),
     analysisQuality: "enhanced",
+    predictionGenerated: true,
   };
 }
 
