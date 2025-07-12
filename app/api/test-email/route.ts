@@ -12,21 +12,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Send a test welcome email
-    const emailResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/send-email`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: testEmail,
-          name: "Test User",
-          type: "patient",
-          isWelcome: true,
-        }),
+    const emailResponse = await fetch(new URL("/api/send-email", request.url), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-    );
+      body: JSON.stringify({
+        email: testEmail,
+        name: "Test User",
+        type: "patient",
+        isWelcome: true,
+      }),
+    });
 
     const emailData = await emailResponse.json();
 
