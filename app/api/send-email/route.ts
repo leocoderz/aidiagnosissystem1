@@ -167,8 +167,8 @@ export async function POST(request: NextRequest) {
     try {
       const mailOptions = {
         from: {
-          name: "SympCare24",
-          address: "natarajmurali56@gmail.com",
+          name: process.env.NEXT_PUBLIC_APP_NAME || "SympCare24",
+          address: process.env.GMAIL_USER || "natarajmurali56@gmail.com",
         },
         to: email,
         subject: subject,
