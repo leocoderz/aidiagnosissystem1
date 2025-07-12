@@ -151,7 +151,13 @@ export default function ResetPasswordPage() {
 
         // Redirect to login after 3 seconds
         setTimeout(() => {
-          router.push("/");
+          try {
+            router.push("/");
+          } catch (error) {
+            console.error("Redirect error:", error);
+            // Fallback to window location
+            window.location.href = "/";
+          }
         }, 3000);
       } else {
         toast({
