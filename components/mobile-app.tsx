@@ -388,6 +388,46 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
     }
   };
 
+  const connectFitbit = async () => {
+    setIsConnectingFitbit(true);
+
+    try {
+      const response = await fetch(`/api/fitbit/authorize?userId=${user.id}`);
+      const data = await response.json();
+
+      if (data.authUrl) {
+        // Redirect to Fitbit authorization
+        window.location.href = data.authUrl;
+      } else {
+        throw new Error("Failed to get authorization URL");
+      }
+    } catch (error) {
+      console.error("Error connecting to Fitbit:", error);
+      toast({
+        title: "Fitbit Connection Failed",
+        description: "Unable to connect to Fitbit. Please try again.",
+        variant: "destructive",
+      });
+      setIsConnectingFitbit(false);
+    }
+  };
+
+  const disconnectFitbit = () => {
+    localStorage.removeItem("fitbit_access_token");
+    localStorage.removeItem("fitbit_refresh_token");
+    localStorage.removeItem("fitbit_user_id");
+    localStorage.removeItem("fitbit_token_expiry");
+    setFitbitConnected(false);
+
+    // Remove Fitbit devices from the list
+    setRealDevices((prev) => prev.filter((device) => device.type !== "fitbit"));
+
+    toast({
+      title: "Fitbit Disconnected",
+      description: "Your Fitbit account has been disconnected.",
+    });
+  };
+
   const toggleDeviceConnection = async () => {
     if (!isConnected) {
       // Try to detect and connect to real devices
@@ -1101,34 +1141,109 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
             </Button>
           </div>
 
-          {/* No Real Devices Found */}
-          {realDevices.length === 0 && !isDetectingDevices && (
-            <Card className="border-dashed border-2 border-gray-300">
-              <CardContent className="p-8 text-center">
-                <Bluetooth className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                  No Real Devices Found
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  Connect a real wearable device (Apple Watch, Fitbit, Garmin,
-                  etc.) to start monitoring your health data.
-                </p>
-                <div className="space-y-2 text-sm text-gray-500">
-                  <p>• Enable Bluetooth on your device</p>
-                  <p>• Ensure your wearable is in pairing mode</p>
-                  <p>• Grant necessary permissions</p>
+          {/* Fitbit Connection Card */}
+          <Card
+            className={`border-2 ${fitbitConnected ? "border-green-200 bg-green-50" : "border-blue-200 bg-blue-50"}`}
+          >
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div
+                    className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                      fitbitConnected ? "bg-green-100" : "bg-blue-100"
+                    }`}
+                  >
+                    <Heart
+                      className={`h-6 w-6 ${
+                        fitbitConnected ? "text-green-600" : "text-blue-600"
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <h3
+                      className={`font-semibold ${
+                        fitbitConnected ? "text-green-800" : "text-blue-800"
+                      }`}
+                    >
+                      Fitbit Integration
+                    </h3>
+                    <p
+                      className={`text-sm ${
+                        fitbitConnected ? "text-green-600" : "text-blue-600"
+                      }`}
+                    >
+                      {fitbitConnected
+                        ? "Connected and syncing data"
+                        : "Connect your Fitbit account for real device data"}
+                    </p>
+                  </div>
                 </div>
-                <Button
-                  onClick={detectRealDevices}
-                  className="mt-4"
-                  variant="outline"
-                >
-                  <Search className="h-4 w-4 mr-2" />
-                  Scan for Devices
-                </Button>
-              </CardContent>
-            </Card>
-          )}
+                <div>
+                  {fitbitConnected ? (
+                    <Button
+                      onClick={disconnectFitbit}
+                      variant="outline"
+                      size="sm"
+                      className="border-red-200 text-red-700 hover:bg-red-50"
+                    >
+                      Disconnect
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={connectFitbit}
+                      disabled={isConnectingFitbit}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      {isConnectingFitbit ? (
+                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Heart className="h-4 w-4 mr-2" />
+                      )}
+                      {isConnectingFitbit ? "Connecting..." : "Connect Fitbit"}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* No Real Devices Found */}
+          {realDevices.length === 0 &&
+            !isDetectingDevices &&
+            !fitbitConnected && (
+              <Card className="border-dashed border-2 border-gray-300">
+                <CardContent className="p-8 text-center">
+                  <Bluetooth className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                    No Real Devices Found
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    Connect a real wearable device (Apple Watch, Fitbit, Garmin,
+                    etc.) to start monitoring your health data.
+                  </p>
+                  <div className="space-y-2 text-sm text-gray-500 mb-4">
+                    <p>• Connect via Fitbit Web API (recommended)</p>
+                    <p>• Enable Bluetooth on your device</p>
+                    <p>• Ensure your wearable is in pairing mode</p>
+                    <p>• Grant necessary permissions</p>
+                  </div>
+                  <div className="flex gap-2 justify-center">
+                    <Button
+                      onClick={connectFitbit}
+                      className="bg-blue-600 hover:bg-blue-700"
+                      disabled={isConnectingFitbit}
+                    >
+                      <Heart className="h-4 w-4 mr-2" />
+                      Connect Fitbit
+                    </Button>
+                    <Button onClick={detectRealDevices} variant="outline">
+                      <Search className="h-4 w-4 mr-2" />
+                      Scan Bluetooth
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
           {/* Real Devices List */}
           {realDevices.length > 0 && (
