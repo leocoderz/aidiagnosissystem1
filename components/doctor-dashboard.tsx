@@ -481,6 +481,20 @@ export default function DoctorDashboard({
               <span className="text-xs font-medium">Patients</span>
             </TabsTrigger>
             <TabsTrigger
+              value="vitals"
+              className="flex flex-col items-center py-2 data-[state=active]:bg-orange-50 data-[state=active]:text-orange-600 rounded-2xl mx-1 transition-all duration-300 relative"
+            >
+              <Heart className="h-5 w-5 mb-1" />
+              <span className="text-xs font-medium">Vitals</span>
+              {vitalsAlerts.length > 0 && (
+                <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                  <span className="text-xs font-bold text-white">
+                    {vitalsAlerts.length}
+                  </span>
+                </div>
+              )}
+            </TabsTrigger>
+            <TabsTrigger
               value="urgent"
               className="flex flex-col items-center py-2 data-[state=active]:bg-red-50 data-[state=active]:text-red-600 rounded-2xl mx-1 transition-all duration-300"
             >
