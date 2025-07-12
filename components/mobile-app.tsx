@@ -32,6 +32,7 @@ import {
   Calendar,
   MapPin,
   Brain,
+  Search,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import SymptomInput from "@/components/symptom-input";
