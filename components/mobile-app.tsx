@@ -288,18 +288,21 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
     }
   };
 
-  const toggleDeviceConnection = () => {
-    setIsConnected(!isConnected);
+  const toggleDeviceConnection = async () => {
     if (!isConnected) {
-      setBatteryLevel(Math.floor(Math.random() * 30) + 70); // 70-100%
-      toast({
-        title: "Device Connected",
-        description: `${deviceName} connected successfully`,
-      });
+      // Try to detect and connect to real devices
+      await detectRealDevices();
     } else {
+      // Disconnect from current device
+      setIsConnected(false);
+      setDeviceName("No Device");
+      setBatteryLevel(0);
+      setLastSync("");
+      setRealDevices([]);
+
       toast({
         title: "Device Disconnected",
-        description: `${deviceName} disconnected`,
+        description: "Disconnected from wearable device",
       });
     }
   };
