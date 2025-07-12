@@ -865,6 +865,209 @@ export default function DoctorDashboard({
           </Card>
         </TabsContent>
 
+        {/* Disease Prediction Dashboard */}
+        <TabsContent
+          value="predictions"
+          className="p-6 space-y-6 animate-fade-in"
+        >
+          <Card className="border-0 bg-gradient-to-r from-purple-50 to-indigo-50 shadow-lg">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-xl flex items-center gap-3">
+                <Brain className="h-6 w-6 text-purple-600" />
+                AI Disease Prediction Dashboard
+              </CardTitle>
+              <p className="text-gray-600">
+                Predictive insights and risk assessments for your patients
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="text-center p-4 bg-white rounded-lg shadow">
+                  <div className="text-3xl font-bold text-purple-600">
+                    {
+                      patients.filter(
+                        (p) => p.aiDiagnosis?.diseasePredictions?.length > 0,
+                      ).length
+                    }
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    Patients with Predictions
+                  </div>
+                </div>
+                <div className="text-center p-4 bg-white rounded-lg shadow">
+                  <div className="text-3xl font-bold text-orange-600">
+                    {
+                      patients.filter((p) =>
+                        p.aiDiagnosis?.diseasePredictions?.some(
+                          (pred: any) => pred.riskScore >= 70,
+                        ),
+                      ).length
+                    }
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    High Risk Predictions
+                  </div>
+                </div>
+                <div className="text-center p-4 bg-white rounded-lg shadow">
+                  <div className="text-3xl font-bold text-red-600">
+                    {
+                      patients.filter((p) =>
+                        p.aiDiagnosis?.predictiveInsights?.some(
+                          (insight: string) =>
+                            insight.toLowerCase().includes("screening") ||
+                            insight.toLowerCase().includes("immediate"),
+                        ),
+                      ).length
+                    }
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    Urgent Interventions
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* High Risk Patients */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+                High-Risk Disease Predictions
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {patients
+                  .filter((p) =>
+                    p.aiDiagnosis?.diseasePredictions?.some(
+                      (pred: any) => pred.riskScore >= 50,
+                    ),
+                  )
+                  .slice(0, 5)
+                  .map((patient) => (
+                    <div
+                      key={patient.id}
+                      className="p-4 border rounded-lg bg-red-50 hover:bg-red-100 transition-colors"
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <h4 className="font-semibold text-gray-800">
+                            {patient.name}
+                          </h4>
+                          <p className="text-sm text-gray-600">
+                            Age: {patient.age} | Last Visit: {patient.lastVisit}
+                          </p>
+                        </div>
+                        <Badge className="bg-red-500 text-white">
+                          High Risk
+                        </Badge>
+                      </div>
+                      {patient.aiDiagnosis?.diseasePredictions
+                        ?.filter((pred: any) => pred.riskScore >= 50)
+                        .slice(0, 2)
+                        .map((prediction: any, index: number) => (
+                          <div
+                            key={index}
+                            className="mb-2 p-3 bg-white rounded border-l-4 border-red-500"
+                          >
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="font-medium text-red-800">
+                                {prediction.disease}
+                              </span>
+                              <span className="text-sm font-bold text-red-600">
+                                {prediction.riskScore}% Risk
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-700">
+                              Timeline: {prediction.timeline}
+                            </p>
+                            {prediction.preventionMeasures &&
+                              prediction.preventionMeasures.length > 0 && (
+                                <p className="text-xs text-gray-600 mt-1">
+                                  <strong>Prevention:</strong>{" "}
+                                  {prediction.preventionMeasures.join(", ")}
+                                </p>
+                              )}
+                          </div>
+                        ))}
+                    </div>
+                  ))}
+                {patients.filter((p) =>
+                  p.aiDiagnosis?.diseasePredictions?.some(
+                    (pred: any) => pred.riskScore >= 50,
+                  ),
+                ).length === 0 && (
+                  <div className="text-center py-8">
+                    <CheckCircle className="mx-auto h-12 w-12 text-green-500 mb-4" />
+                    <p className="text-gray-600">
+                      No high-risk disease predictions currently identified.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Preventive Care Recommendations */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5 text-blue-600" />
+                Preventive Care Recommendations
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {patients
+                  .filter((p) => p.aiDiagnosis?.predictiveInsights?.length > 0)
+                  .slice(0, 4)
+                  .map((patient) => (
+                    <div
+                      key={patient.id}
+                      className="p-4 border rounded-lg bg-blue-50"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-semibold text-gray-800">
+                          {patient.name}
+                        </h4>
+                        <Badge
+                          variant="outline"
+                          className="text-blue-600 border-blue-600"
+                        >
+                          Prevention Focus
+                        </Badge>
+                      </div>
+                      <div className="space-y-2">
+                        {patient.aiDiagnosis?.predictiveInsights
+                          ?.slice(0, 2)
+                          .map((insight: string, index: number) => (
+                            <div key={index} className="flex items-start gap-2">
+                              <Lightbulb className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                              <span className="text-sm text-blue-800">
+                                {insight}
+                              </span>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  ))}
+                {patients.filter(
+                  (p) => p.aiDiagnosis?.predictiveInsights?.length > 0,
+                ).length === 0 && (
+                  <div className="text-center py-8">
+                    <Brain className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                    <p className="text-gray-600">
+                      No predictive insights available. Patients need AI
+                      diagnosis analysis first.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Enhanced Patients Tab */}
         <TabsContent value="patients" className="p-6 space-y-6 animate-fade-in">
           {/* Search and Filter */}
