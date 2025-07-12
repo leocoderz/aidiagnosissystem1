@@ -270,10 +270,77 @@ export async function detectFitbitDevices(): Promise<RealWearableDevice[]> {
   // Check for Fitbit Web API access
   if (typeof window !== "undefined") {
     try {
-      // Fitbit OAuth would be implemented here
-      console.log("Checking for Fitbit connection...");
+      // Check if we have stored Fitbit access token
+      const accessToken = localStorage.getItem("fitbit_access_token");
+      const refreshToken = localStorage.getItem("fitbit_refresh_token");
+      const tokenExpiry = localStorage.getItem("fitbit_token_expiry");
+
+      if (!accessToken) {
+        console.log("No Fitbit access token found");
+        return devices;
+      }
+
+      // Check if token is expired
+      const isExpired = tokenExpiry && Date.now() > parseInt(tokenExpiry);
+      let currentAccessToken = accessToken;
+
+      if (isExpired && refreshToken) {
+        try {
+          // Refresh the token
+          const response = await fetch("/api/fitbit/devices", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ refreshToken }),
+          });
+
+          if (response.ok) {
+            const tokenData = await response.json();
+            currentAccessToken = tokenData.access_token;
+
+            // Update stored tokens
+            localStorage.setItem("fitbit_access_token", tokenData.access_token);
+            localStorage.setItem(
+              "fitbit_refresh_token",
+              tokenData.refresh_token,
+            );
+            localStorage.setItem(
+              "fitbit_token_expiry",
+              (Date.now() + tokenData.expires_in * 1000).toString(),
+            );
+          } else {
+            console.log("Failed to refresh Fitbit token");
+            return devices;
+          }
+        } catch (refreshError) {
+          console.log("Error refreshing Fitbit token:", refreshError);
+          return devices;
+        }
+      }
+
+      // Fetch Fitbit devices using the API
+      const response = await fetch("/api/fitbit/devices", {
+        headers: {
+          Authorization: `Bearer ${currentAccessToken}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.devices && data.devices.length > 0) {
+          devices.push(...data.devices);
+          console.log(`Found ${data.devices.length} Fitbit device(s)`);
+        }
+      } else if (response.status === 401) {
+        // Token is invalid, clear stored tokens
+        localStorage.removeItem("fitbit_access_token");
+        localStorage.removeItem("fitbit_refresh_token");
+        localStorage.removeItem("fitbit_token_expiry");
+        console.log("Fitbit token invalid, cleared stored tokens");
+      }
     } catch (error) {
-      console.log("Fitbit API not available:", error);
+      console.log("Fitbit API error:", error);
     }
   }
 
