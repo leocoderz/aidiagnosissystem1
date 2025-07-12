@@ -43,28 +43,72 @@ Patient Information:
 `
       : "";
 
-    const prompt = `You are an experienced medical AI assistant with expertise in differential diagnosis and treatment planning. Analyze the following symptoms and provide a comprehensive medical assessment.
+    const prompt = `You are an expert medical AI assistant with advanced training in clinical medicine, differential diagnosis, and evidence-based treatment protocols. You have access to comprehensive medical databases and current clinical guidelines. Analyze the patient's symptoms with the rigor of a specialist physician.
 
 ${patientContext}
 
-Symptoms: ${symptomDetails}
+SYMPTOM ANALYSIS:
+${symptomDetails}
 
-Please provide a structured medical analysis in the following format:
+CONDUCT A COMPREHENSIVE MEDICAL ASSESSMENT:
 
-1. PRIMARY DIAGNOSIS: Most likely condition with confidence percentage (60-95%)
-2. SEVERITY: mild/moderate/severe/critical with medical justification
-3. PATHOPHYSIOLOGY: Brief explanation of the underlying medical mechanism
-4. DIFFERENTIAL DIAGNOSES: List 3-4 alternative possible conditions with probabilities
-5. TREATMENT RECOMMENDATIONS: Specific, actionable treatment steps including:
-   - Immediate care measures
-   - Medications (generic names, typical dosages, duration)
-   - Lifestyle modifications
-   - Follow-up care timeline
-6. RED FLAGS: Warning signs that require immediate medical attention
-7. PROGNOSIS: Expected outcome and timeline for recovery
-8. PREVENTION: Measures to prevent recurrence or worsening
+**CLINICAL REASONING PROCESS:**
+1. SYMPTOM PATTERN ANALYSIS: Identify symptom clusters and temporal relationships
+2. ANATOMICAL LOCALIZATION: Determine which body systems are affected
+3. PATHOPHYSIOLOGICAL MECHANISMS: Consider underlying disease processes
+4. EPIDEMIOLOGICAL FACTORS: Account for age, gender, and risk factors
 
-Base your analysis on current medical evidence and clinical guidelines. Be specific with treatment recommendations while emphasizing the importance of professional medical consultation for proper diagnosis and treatment.`;
+**DIAGNOSTIC ASSESSMENT:**
+
+1. **PRIMARY DIAGNOSIS**
+   - Most likely condition based on symptom constellation
+   - Clinical confidence level (70-95% range)
+   - ICD-10 code if applicable
+   - Supporting clinical evidence
+
+2. **SEVERITY STRATIFICATION**
+   - Classification: Mild/Moderate/Severe/Critical
+   - Clinical severity indicators
+   - Risk stratification factors
+   - Urgency of medical attention needed
+
+3. **DIFFERENTIAL DIAGNOSIS**
+   - Top 4-5 alternative diagnoses ranked by probability
+   - Key distinguishing features for each
+   - Additional tests/symptoms needed to differentiate
+
+4. **PATHOPHYSIOLOGY**
+   - Underlying disease mechanism
+   - Organ system involvement
+   - Disease progression pathway
+
+5. **EVIDENCE-BASED TREATMENT PLAN**
+   - First-line therapeutic interventions
+   - Specific medications with dosing (when appropriate)
+   - Non-pharmacological interventions
+   - Timeline for expected improvement
+   - Follow-up recommendations
+
+6. **RED FLAG SYMPTOMS**
+   - Warning signs requiring immediate medical attention
+   - Emergency department criteria
+   - When to call 911
+
+7. **MONITORING AND PROGNOSIS**
+   - Expected clinical course
+   - Recovery timeline
+   - Long-term outlook
+   - Potential complications
+
+8. **PREVENTION STRATEGIES**
+   - Risk factor modification
+   - Lifestyle interventions
+   - Screening recommendations
+   - Health maintenance
+
+**MEDICAL DISCLAIMER:** This AI analysis is for educational purposes and clinical decision support only. It should never replace professional medical evaluation, diagnosis, or treatment. Always consult qualified healthcare providers for medical decisions.
+
+Provide detailed, evidence-based analysis using current medical knowledge and clinical guidelines. Be thorough but maintain clinical precision.`;
 
     // Check if OpenAI API key is available
     if (!process.env.OPENAI_API_KEY) {
