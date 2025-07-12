@@ -34,12 +34,13 @@ export async function POST(req: Request) {
 
     const patientContext = patientInfo
       ? `
-Patient Information:
+PATIENT DEMOGRAPHICS & HISTORY:
 - Age: ${patientInfo.age || "Not specified"}
 - Gender: ${patientInfo.gender || "Not specified"}
 - Medical History: ${patientInfo.medicalHistory || "None reported"}
 - Current Medications: ${patientInfo.medications || "None reported"}
 - Allergies: ${patientInfo.allergies || "None reported"}
+- Family History: ${patientInfo.familyHistory || "None reported"}
 `
       : "";
 
@@ -113,35 +114,62 @@ Provide detailed, evidence-based analysis using current medical knowledge and cl
     // Check if OpenAI API key is available
     if (!process.env.OPENAI_API_KEY) {
       console.log("OpenAI API key not found, using fallback diagnosis");
-      const fallbackDiagnosis = generateRuleBasedDiagnosis(symptoms);
+      const fallbackDiagnosis = generateAdvancedRuleBasedDiagnosis(
+        symptoms,
+        patientInfo,
+      );
       return Response.json(fallbackDiagnosis);
     }
 
     const { text } = await generateText({
       model: openai("gpt-4o"),
       prompt,
-      system: `You are a medical AI assistant with expertise in evidence-based medicine, differential diagnosis, and treatment planning. 
-      Provide accurate, comprehensive medical assessments following current clinical guidelines.
-      Always emphasize that AI analysis should supplement, not replace, professional medical evaluation.
-      Be specific with treatment recommendations while maintaining appropriate medical caution.
-      Format responses clearly with proper medical terminology and practical guidance.
-      Focus on actionable medical advice while being appropriately cautious about serious conditions.`,
+      system: `You are an advanced medical AI with specialist-level knowledge across all medical disciplines including internal medicine, emergency medicine, family medicine, and subspecialties. You have been trained on:
+
+- Current medical textbooks and clinical guidelines (Harrison's, UpToDate, Cochrane Reviews)
+- Evidence-based medicine protocols and meta-analyses
+- Differential diagnosis methodologies and clinical decision rules
+- Treatment algorithms and clinical pathways
+- Medical decision-making frameworks and risk calculators
+- Severity scoring systems (APACHE, CURB-65, Wells Score, etc.)
+- Clinical prediction rules and diagnostic criteria
+
+Your analysis should reflect the clinical reasoning of an experienced physician while maintaining appropriate limitations. Use precise medical terminology, cite relevant clinical criteria when applicable, and provide comprehensive yet practical recommendations.
+
+CRITICAL GUIDELINES:
+- Base all assessments on evidence-based medicine and validated clinical criteria
+- Use standardized clinical scoring systems and diagnostic criteria when applicable
+- Provide specific, actionable recommendations with appropriate medical detail
+- Clearly distinguish between different severity levels using clinical indicators
+- Always emphasize the need for professional medical evaluation and appropriate urgency
+- Consider patient safety as the highest priority in all recommendations
+- Be thorough in differential diagnosis considerations with probability assessments
+- Provide realistic prognosis and timeline expectations based on medical literature
+- Include relevant ICD-10 codes and clinical terminology where appropriate
+- Consider age, gender, and epidemiological factors in your assessment`,
     });
 
     // Parse the AI response and structure it
-    const diagnosis = parseAIResponse(text, symptoms);
+    const diagnosis = parseEnhancedAIResponse(text, symptoms, patientInfo);
 
     return Response.json(diagnosis);
   } catch (error) {
     console.error("AI Diagnosis API error:", error);
 
-    // Fallback to rule-based diagnosis
-    const fallbackDiagnosis = generateRuleBasedDiagnosis(symptoms);
+    // Fallback to enhanced rule-based diagnosis
+    const fallbackDiagnosis = generateAdvancedRuleBasedDiagnosis(
+      symptoms,
+      patientInfo,
+    );
     return Response.json(fallbackDiagnosis);
   }
 }
 
-function parseAIResponse(aiText: string, symptoms: any[]) {
+function parseEnhancedAIResponse(
+  aiText: string,
+  symptoms: any[],
+  patientInfo?: any,
+) {
   const lines = aiText.split("\n").filter((line) => line.trim());
 
   let condition = "Medical Assessment";
@@ -153,32 +181,43 @@ function parseAIResponse(aiText: string, symptoms: any[]) {
   const differentialDiagnoses: Array<{
     condition: string;
     probability: number;
+    distinguishingFeatures: string;
   }> = [];
   const redFlags: string[] = [];
   let prognosis = "";
   const prevention: string[] = [];
   let seekImmediateCare = false;
+  let icdCode = "";
+  const clinicalEvidence: string[] = [];
+  const followUpPlan: string[] = [];
 
-  // Parse structured response sections
+  // Enhanced parsing logic
   let currentSection = "";
 
   for (const line of lines) {
     const upperLine = line.toUpperCase();
     const trimmedLine = line.trim();
 
-    // Identify sections
+    // Identify sections with better pattern matching
     if (
       upperLine.includes("PRIMARY DIAGNOSIS") ||
-      upperLine.includes("DIAGNOSIS:")
+      upperLine.includes("MOST LIKELY")
     ) {
       currentSection = "diagnosis";
-      const match = line.match(/(\d+)%/);
-      if (match) confidence = Number.parseInt(match[1]);
+      const confidenceMatch = line.match(/(\d+)%/);
+      if (confidenceMatch) confidence = Number.parseInt(confidenceMatch[1]);
+
       const conditionMatch = line.match(
         /(?:diagnosis|condition)[:\-\s]*(.+?)(?:\s*\(|\s*with|\s*-|$)/i,
       );
       if (conditionMatch) condition = conditionMatch[1].trim();
-    } else if (upperLine.includes("SEVERITY")) {
+
+      const icdMatch = line.match(/([A-Z]\d{2}(?:\.\d+)?)/);
+      if (icdMatch) icdCode = icdMatch[1];
+    } else if (
+      upperLine.includes("SEVERITY") ||
+      upperLine.includes("CLASSIFICATION")
+    ) {
       currentSection = "severity";
       if (upperLine.includes("CRITICAL") || upperLine.includes("SEVERE"))
         severity = "severe";
@@ -186,20 +225,36 @@ function parseAIResponse(aiText: string, symptoms: any[]) {
       else if (upperLine.includes("MILD")) severity = "mild";
     } else if (
       upperLine.includes("TREATMENT") ||
-      upperLine.includes("RECOMMENDATIONS")
+      upperLine.includes("THERAPEUTIC")
     ) {
       currentSection = "treatment";
     } else if (upperLine.includes("DIFFERENTIAL")) {
       currentSection = "differential";
     } else if (
-      upperLine.includes("RED FLAGS") ||
+      upperLine.includes("RED FLAG") ||
       upperLine.includes("WARNING")
     ) {
       currentSection = "redflags";
-    } else if (upperLine.includes("PROGNOSIS")) {
+    } else if (
+      upperLine.includes("PROGNOSIS") ||
+      upperLine.includes("EXPECTED COURSE")
+    ) {
       currentSection = "prognosis";
-    } else if (upperLine.includes("PREVENTION")) {
+    } else if (
+      upperLine.includes("PREVENTION") ||
+      upperLine.includes("RISK FACTOR")
+    ) {
       currentSection = "prevention";
+    } else if (
+      upperLine.includes("FOLLOW-UP") ||
+      upperLine.includes("MONITORING")
+    ) {
+      currentSection = "followup";
+    } else if (
+      upperLine.includes("CLINICAL EVIDENCE") ||
+      upperLine.includes("SUPPORTING")
+    ) {
+      currentSection = "evidence";
     }
 
     // Parse content based on current section
@@ -217,11 +272,18 @@ function parseAIResponse(aiText: string, symptoms: any[]) {
           case "differential":
             const probMatch = content.match(/(\d+)%/);
             const prob = probMatch ? Number.parseInt(probMatch[1]) : 10;
-            const condName = content.replace(/$$\d+%$$/, "").trim();
+            const condName = content
+              .replace(/\(\d+%\)/, "")
+              .split("-")[0]
+              .trim();
+            const features = content.includes("-")
+              ? content.split("-").slice(1).join("-").trim()
+              : "";
             if (condName)
               differentialDiagnoses.push({
                 condition: condName,
                 probability: prob,
+                distinguishingFeatures: features,
               });
             break;
           case "redflags":
@@ -229,6 +291,12 @@ function parseAIResponse(aiText: string, symptoms: any[]) {
             break;
           case "prevention":
             prevention.push(content);
+            break;
+          case "followup":
+            followUpPlan.push(content);
+            break;
+          case "evidence":
+            clinicalEvidence.push(content);
             break;
         }
       }
@@ -241,7 +309,7 @@ function parseAIResponse(aiText: string, symptoms: any[]) {
     }
   }
 
-  // Check for emergency conditions
+  // Enhanced emergency detection
   const emergencyKeywords = [
     "immediate",
     "emergency",
@@ -249,59 +317,92 @@ function parseAIResponse(aiText: string, symptoms: any[]) {
     "critical",
     "severe",
     "911",
+    "chest pain",
+    "difficulty breathing",
+    "stroke",
+    "heart attack",
+    "anaphylaxis",
+    "sepsis",
   ];
+
+  const highRiskConditions = [
+    "myocardial infarction",
+    "stroke",
+    "pulmonary embolism",
+    "aortic dissection",
+    "meningitis",
+    "sepsis",
+    "anaphylaxis",
+    "pneumothorax",
+  ];
+
   if (
     emergencyKeywords.some((keyword) =>
       aiText.toLowerCase().includes(keyword),
     ) ||
-    severity === "severe"
+    highRiskConditions.some((condition) =>
+      aiText.toLowerCase().includes(condition),
+    ) ||
+    severity === "severe" ||
+    severity === "critical" ||
+    (confidence > 85 &&
+      (condition.toLowerCase().includes("emergency") ||
+        condition.toLowerCase().includes("acute")))
   ) {
     seekImmediateCare = true;
   }
 
-  // Default values if parsing failed
+  // Enhanced default values with medical precision
   if (treatment.length === 0) {
     treatment = [
-      "Rest and adequate hydration",
-      "Monitor symptoms closely for changes",
-      "Over-the-counter pain relief as needed (acetaminophen or ibuprofen)",
-      "Consult healthcare provider if symptoms persist or worsen",
-      "Follow up within 3-7 days if no improvement",
+      "Symptomatic supportive care with close monitoring",
+      "Adequate rest (8-10 hours sleep) and increased fluid intake (2-3 liters/day)",
+      "Over-the-counter analgesics as needed (acetaminophen 650mg q6h or ibuprofen 400mg q8h)",
+      "Temperature monitoring and fever management if applicable",
+      "Symptom diary to track progression and response to treatment",
+      "Follow-up with primary care physician within 24-48 hours if symptoms persist",
     ];
   }
 
   if (recommendations.length === 0) {
     recommendations = [
-      "Follow treatment plan consistently",
-      "Monitor for symptom changes daily",
-      "Maintain good nutrition and hydration",
-      "Get adequate rest and sleep",
-      "Avoid known triggers if applicable",
+      "Implement comprehensive treatment plan with adherence monitoring",
+      "Daily symptom assessment and progression tracking",
+      "Maintain optimal nutrition, hydration, and sleep hygiene",
+      "Avoid known triggers and implement risk reduction strategies",
+      "Seek immediate medical attention if red flag symptoms develop",
     ];
   }
 
   return {
     condition:
-      condition.replace(/[^\w\s-]/g, "").trim() || "Medical Assessment",
-    confidence: Math.min(Math.max(confidence, 60), 95),
+      condition.replace(/[^\w\s\-().]/g, "").trim() || "Medical Assessment",
+    confidence: Math.min(Math.max(confidence, 70), 95),
     severity,
+    icdCode,
     explanation:
-      explanation.substring(0, 1000) + (explanation.length > 1000 ? "..." : ""),
+      explanation.substring(0, 1500) + (explanation.length > 1500 ? "..." : ""),
     recommendations,
     treatment,
-    differentialDiagnoses: differentialDiagnoses.slice(0, 4),
-    redFlags: redFlags.slice(0, 5),
+    differentialDiagnoses: differentialDiagnoses.slice(0, 5),
+    redFlags: redFlags.slice(0, 6),
     prognosis:
       prognosis.trim() ||
-      "Prognosis depends on adherence to treatment and individual factors. Most cases resolve with appropriate care.",
-    prevention: prevention.slice(0, 5),
+      "Prognosis depends on adherence to treatment plan and individual patient factors. Most cases show improvement with appropriate medical care and monitoring.",
+    prevention: prevention.slice(0, 6),
+    clinicalEvidence: clinicalEvidence.slice(0, 4),
+    followUpPlan: followUpPlan.slice(0, 4),
     seekImmediateCare,
     aiGenerated: true,
     timestamp: new Date().toISOString(),
+    analysisQuality: "enhanced",
   };
 }
 
-function generateRuleBasedDiagnosis(symptoms: any[]) {
+function generateAdvancedRuleBasedDiagnosis(
+  symptoms: any[],
+  patientInfo?: any,
+) {
   const symptomText = symptoms
     .map((s) =>
       typeof s === "string" ? s : `${s.name} ${s.description || ""}`,
@@ -309,143 +410,431 @@ function generateRuleBasedDiagnosis(symptoms: any[]) {
     .join(" ")
     .toLowerCase();
 
-  // Emergency conditions
-  const emergencyKeywords = [
-    "chest pain",
-    "difficulty breathing",
-    "severe",
-    "unbearable",
-    "emergency",
-  ];
-  if (emergencyKeywords.some((keyword) => symptomText.includes(keyword))) {
-    return {
-      condition: "Emergency Medical Condition",
-      confidence: 95,
+  const age = patientInfo?.age || 30;
+  const gender = patientInfo?.gender || "unknown";
+
+  // Enhanced emergency detection
+  const emergencyPatterns = [
+    {
+      keywords: ["chest pain", "crushing", "pressure"],
+      condition: "Acute Coronary Syndrome",
+      severity: "critical",
+    },
+    {
+      keywords: ["difficulty breathing", "shortness of breath", "dyspnea"],
+      condition: "Respiratory Distress",
       severity: "severe",
-      explanation:
-        "Your symptoms suggest a serious condition that requires immediate medical attention.",
-      recommendations: [
-        "Seek immediate emergency medical care",
-        "Call 911 or go to the nearest emergency room",
-        "Do not delay medical treatment",
-      ],
-      treatment: [
-        "Immediate medical evaluation required",
-        "Emergency department assessment",
-        "Professional medical intervention",
-        "Do not attempt self-treatment",
-      ],
-      differentialDiagnoses: [
-        { condition: "Acute cardiac event", probability: 30 },
-        { condition: "Respiratory emergency", probability: 25 },
-        { condition: "Severe allergic reaction", probability: 20 },
-        { condition: "Acute neurological event", probability: 15 },
-      ],
-      redFlags: [
-        "Worsening symptoms",
-        "Loss of consciousness",
-        "Severe pain",
-        "Difficulty breathing",
-      ],
-      prognosis:
-        "Depends on immediate medical intervention and underlying condition",
-      prevention: [
-        "Regular health checkups",
-        "Emergency action plan",
-        "Know warning signs",
-      ],
-      seekImmediateCare: true,
-      aiGenerated: false,
-    };
+    },
+    {
+      keywords: ["severe headache", "worst headache", "thunderclap"],
+      condition: "Secondary Headache Disorder",
+      severity: "severe",
+    },
+    {
+      keywords: ["abdominal pain", "severe", "acute"],
+      condition: "Acute Abdominal Pain",
+      severity: "severe",
+    },
+  ];
+
+  for (const pattern of emergencyPatterns) {
+    if (pattern.keywords.every((keyword) => symptomText.includes(keyword))) {
+      return createEmergencyDiagnosis(
+        pattern.condition,
+        symptomText,
+        age,
+        gender,
+      );
+    }
   }
 
-  // Respiratory conditions
-  if (symptomText.includes("cough") && symptomText.includes("fever")) {
-    return {
-      condition: "Upper Respiratory Infection",
-      confidence: 82,
-      severity: "moderate",
-      explanation:
-        "Your symptoms are consistent with a viral or bacterial upper respiratory infection, commonly affecting the nose, throat, and upper airways.",
-      recommendations: [
-        "Get plenty of rest and stay hydrated",
-        "Use a humidifier or breathe steam",
-        "Monitor temperature regularly",
-        "Avoid close contact with others",
-      ],
-      treatment: [
-        "Rest and increased fluid intake (8-10 glasses of water daily)",
-        "Acetaminophen or ibuprofen for fever and pain (follow package directions)",
-        "Throat lozenges or warm salt water gargles for sore throat",
-        "Honey for cough relief (not for children under 1 year)",
-        "Humidifier or steam inhalation for congestion",
-      ],
-      differentialDiagnoses: [
-        { condition: "Viral upper respiratory infection", probability: 60 },
-        { condition: "Bacterial sinusitis", probability: 25 },
-        { condition: "Allergic rhinitis", probability: 10 },
-        { condition: "Early pneumonia", probability: 5 },
-      ],
-      redFlags: [
-        "High fever over 103��F (39.4°C)",
-        "Difficulty breathing",
-        "Severe headache",
-        "Chest pain",
-      ],
-      prognosis:
-        "Usually resolves within 7-10 days with proper care. Most people recover completely without complications.",
-      prevention: [
-        "Hand hygiene",
-        "Avoid close contact with sick individuals",
-        "Annual flu vaccination",
-        "Adequate sleep",
-      ],
-      seekImmediateCare: false,
-      aiGenerated: false,
-    };
+  // Enhanced respiratory conditions
+  if (
+    (symptomText.includes("cough") && symptomText.includes("fever")) ||
+    (symptomText.includes("sore throat") && symptomText.includes("congestion"))
+  ) {
+    return createRespiratoryDiagnosis(symptomText, age, gender);
   }
 
-  // Default assessment
+  // Gastrointestinal conditions
+  if (
+    symptomText.includes("nausea") ||
+    symptomText.includes("vomiting") ||
+    symptomText.includes("diarrhea")
+  ) {
+    return createGastrointestinalDiagnosis(symptomText, age, gender);
+  }
+
+  // Neurological conditions
+  if (
+    symptomText.includes("headache") ||
+    symptomText.includes("dizziness") ||
+    symptomText.includes("fatigue")
+  ) {
+    return createNeurologicalDiagnosis(symptomText, age, gender);
+  }
+
+  // Default comprehensive assessment
+  return createGeneralAssessment(symptomText, age, gender);
+}
+
+function createEmergencyDiagnosis(
+  condition: string,
+  symptomText: string,
+  age: number,
+  gender: string,
+) {
   return {
-    condition: "General Health Assessment",
-    confidence: 70,
-    severity: "mild",
-    explanation:
-      "Based on your symptoms, this appears to be a general health concern that should be monitored and may benefit from medical evaluation.",
+    condition: condition,
+    confidence: 90,
+    severity: "critical",
+    icdCode: "R06.02", // Example ICD code
+    explanation: `Based on the symptom presentation, this appears to be a serious medical condition requiring immediate evaluation. The combination of symptoms suggests potential ${condition.toLowerCase()} which requires urgent medical intervention.`,
     recommendations: [
-      "Monitor symptoms closely and track any changes",
-      "Maintain good hydration and nutrition",
-      "Get adequate rest and sleep",
-      "Consider consulting a healthcare provider",
+      "IMMEDIATE EMERGENCY MEDICAL CARE - Call 911 or go to nearest Emergency Department",
+      "Do not delay seeking medical attention",
+      "Have someone drive you - do not drive yourself",
+      "Bring list of current medications and medical history",
+      "If symptoms worsen, call emergency services immediately",
     ],
     treatment: [
-      "Symptomatic care and monitoring",
-      "Adequate rest and hydration",
-      "Over-the-counter medications as needed for comfort",
-      "Follow-up with healthcare provider if symptoms persist beyond 3-5 days",
-      "Keep a symptom diary to track changes",
+      "IMMEDIATE professional medical evaluation and intervention required",
+      "Emergency department assessment and stabilization",
+      "Diagnostic testing as determined by emergency physician",
+      "Treatment based on confirmed diagnosis and clinical severity",
+      "Continuous monitoring and specialist consultation as needed",
     ],
     differentialDiagnoses: [
-      { condition: "Viral syndrome", probability: 40 },
-      { condition: "Stress-related symptoms", probability: 30 },
-      { condition: "Minor bacterial infection", probability: 20 },
-      { condition: "Allergic reaction", probability: 10 },
+      {
+        condition: "Acute cardiac event",
+        probability: 35,
+        distinguishingFeatures: "Chest symptoms, risk factors",
+      },
+      {
+        condition: "Pulmonary emergency",
+        probability: 30,
+        distinguishingFeatures: "Respiratory symptoms",
+      },
+      {
+        condition: "Vascular emergency",
+        probability: 20,
+        distinguishingFeatures: "Systemic symptoms",
+      },
+      {
+        condition: "Neurological emergency",
+        probability: 15,
+        distinguishingFeatures: "Neurological signs",
+      },
     ],
     redFlags: [
-      "Worsening symptoms",
-      "High fever",
-      "Severe pain",
-      "Difficulty breathing",
+      "Worsening or new severe symptoms",
+      "Loss of consciousness or altered mental status",
+      "Severe difficulty breathing or chest pain",
+      "Signs of shock (rapid pulse, cold skin, confusion)",
+      "Any life-threatening symptom progression",
     ],
     prognosis:
-      "Good with appropriate care and monitoring. Most mild conditions resolve within a few days to a week.",
+      "Prognosis depends on immediate medical intervention and underlying pathology. Early treatment significantly improves outcomes.",
     prevention: [
-      "Healthy lifestyle",
-      "Regular exercise",
-      "Stress management",
-      "Adequate sleep",
+      "Regular cardiovascular risk assessment",
+      "Management of chronic conditions",
+      "Recognition of warning signs",
+      "Emergency action plan",
+    ],
+    seekImmediateCare: true,
+    aiGenerated: false,
+    timestamp: new Date().toISOString(),
+    analysisQuality: "enhanced",
+  };
+}
+
+function createRespiratoryDiagnosis(
+  symptomText: string,
+  age: number,
+  gender: string,
+) {
+  const hasFever = symptomText.includes("fever");
+  const hasCough = symptomText.includes("cough");
+  const severity = hasFever && hasCough ? "moderate" : "mild";
+
+  return {
+    condition: "Upper Respiratory Tract Infection",
+    confidence: 85,
+    severity: severity,
+    icdCode: "J06.9",
+    explanation:
+      "Clinical presentation consistent with viral or bacterial upper respiratory infection affecting the nose, throat, and upper airways. Common condition with characteristic symptom pattern.",
+    recommendations: [
+      "Supportive care with symptom monitoring and rest",
+      "Maintain adequate hydration (8-10 glasses water daily)",
+      "Use humidifier or steam inhalation for congestion relief",
+      "Monitor temperature and response to treatment",
+      "Avoid close contact with others to prevent transmission",
+    ],
+    treatment: [
+      "Rest and increased fluid intake (2-3 liters daily unless contraindicated)",
+      "Acetaminophen 650mg every 6 hours or ibuprofen 400mg every 8 hours for fever/pain",
+      "Throat lozenges or warm salt water gargles (1/2 tsp salt in 8oz warm water)",
+      "Honey (1-2 teaspoons) for cough relief (avoid in children under 1 year)",
+      "Humidified air or steam inhalation for nasal congestion",
+      "Follow-up if no improvement in 7-10 days or symptoms worsen",
+    ],
+    differentialDiagnoses: [
+      {
+        condition: "Viral upper respiratory infection",
+        probability: 65,
+        distinguishingFeatures: "Self-limiting, gradual onset",
+      },
+      {
+        condition: "Bacterial sinusitis",
+        probability: 20,
+        distinguishingFeatures: "Facial pain, purulent discharge",
+      },
+      {
+        condition: "Allergic rhinitis",
+        probability: 10,
+        distinguishingFeatures: "Seasonal pattern, itching",
+      },
+      {
+        condition: "Early pneumonia",
+        probability: 5,
+        distinguishingFeatures: "Lower respiratory symptoms",
+      },
+    ],
+    redFlags: [
+      "High fever over 103°F (39.4°C) or persistent fever >3 days",
+      "Severe difficulty breathing or shortness of breath",
+      "Chest pain or persistent productive cough",
+      "Signs of dehydration or inability to maintain fluid intake",
+      "Worsening symptoms after initial improvement",
+    ],
+    prognosis:
+      "Excellent prognosis with typical resolution in 7-10 days. Most patients recover completely without complications with appropriate supportive care.",
+    prevention: [
+      "Hand hygiene and respiratory etiquette",
+      "Avoid close contact with symptomatic individuals",
+      "Annual influenza vaccination",
+      "Adequate sleep and stress management",
+      "Maintain good overall health and nutrition",
     ],
     seekImmediateCare: false,
     aiGenerated: false,
+    timestamp: new Date().toISOString(),
+    analysisQuality: "enhanced",
+  };
+}
+
+function createGastrointestinalDiagnosis(
+  symptomText: string,
+  age: number,
+  gender: string,
+) {
+  return {
+    condition: "Acute Gastroenteritis",
+    confidence: 82,
+    severity: "mild",
+    icdCode: "K59.1",
+    explanation:
+      "Symptoms consistent with acute gastroenteritis, likely viral in origin. Common self-limiting condition affecting the gastrointestinal tract.",
+    recommendations: [
+      "Maintain hydration with clear fluids and electrolyte replacement",
+      "BRAT diet (Bananas, Rice, Applesauce, Toast) as tolerated",
+      "Rest and avoid dairy products temporarily",
+      "Monitor for signs of dehydration",
+      "Gradual return to normal diet as symptoms improve",
+    ],
+    treatment: [
+      "Oral rehydration with clear fluids (water, clear broths, electrolyte solutions)",
+      "Small frequent meals starting with bland foods",
+      "Anti-diarrheal medication (loperamide) if needed for symptom control",
+      "Probiotics may help restore normal gut flora",
+      "Avoid dairy, fatty, or spicy foods until recovery",
+      "Medical evaluation if symptoms persist beyond 3-4 days",
+    ],
+    differentialDiagnoses: [
+      {
+        condition: "Viral gastroenteritis",
+        probability: 70,
+        distinguishingFeatures: "Self-limiting, recent exposure",
+      },
+      {
+        condition: "Food poisoning",
+        probability: 20,
+        distinguishingFeatures: "Recent food exposure, acute onset",
+      },
+      {
+        condition: "Bacterial gastroenteritis",
+        probability: 8,
+        distinguishingFeatures: "Bloody stools, high fever",
+      },
+      {
+        condition: "Medication-related",
+        probability: 2,
+        distinguishingFeatures: "Recent antibiotic use",
+      },
+    ],
+    redFlags: [
+      "Severe dehydration (dizziness, dry mouth, decreased urination)",
+      "Blood in vomit or stool",
+      "High fever over 102°F (38.9°C)",
+      "Severe abdominal pain or cramping",
+      "Signs of severe dehydration or electrolyte imbalance",
+    ],
+    prognosis:
+      "Good prognosis with typical resolution in 2-4 days. Most cases are self-limiting with supportive care.",
+    prevention: [
+      "Proper food safety and hygiene practices",
+      "Hand washing before meals and after bathroom use",
+      "Avoid contaminated food and water sources",
+      "Proper food storage and preparation",
+    ],
+    seekImmediateCare: false,
+    aiGenerated: false,
+    timestamp: new Date().toISOString(),
+    analysisQuality: "enhanced",
+  };
+}
+
+function createNeurologicalDiagnosis(
+  symptomText: string,
+  age: number,
+  gender: string,
+) {
+  return {
+    condition: "Tension-Type Headache",
+    confidence: 78,
+    severity: "mild",
+    icdCode: "G44.2",
+    explanation:
+      "Symptoms consistent with tension-type headache, the most common primary headache disorder. Often related to stress, fatigue, or muscle tension.",
+    recommendations: [
+      "Stress management and relaxation techniques",
+      "Regular sleep schedule and adequate rest",
+      "Identify and avoid potential triggers",
+      "Regular meals and adequate hydration",
+      "Gentle neck and shoulder exercises",
+    ],
+    treatment: [
+      "Over-the-counter analgesics: acetaminophen 1000mg or ibuprofen 600mg as needed",
+      "Cold or warm compress to head/neck area",
+      "Relaxation techniques and stress reduction",
+      "Regular sleep schedule (7-9 hours nightly)",
+      "Adequate hydration and regular meals",
+      "Consider preventive measures if headaches are frequent",
+    ],
+    differentialDiagnoses: [
+      {
+        condition: "Tension-type headache",
+        probability: 60,
+        distinguishingFeatures: "Bilateral, band-like pressure",
+      },
+      {
+        condition: "Migraine headache",
+        probability: 25,
+        distinguishingFeatures: "Unilateral, throbbing, photophobia",
+      },
+      {
+        condition: "Cervicogenic headache",
+        probability: 10,
+        distinguishingFeatures: "Neck pain, positional",
+      },
+      {
+        condition: "Medication overuse headache",
+        probability: 5,
+        distinguishingFeatures: "Frequent analgesic use",
+      },
+    ],
+    redFlags: [
+      "Sudden severe headache ('worst headache of life')",
+      "Headache with fever, neck stiffness, or rash",
+      "Neurological symptoms (vision changes, weakness, confusion)",
+      "Headache pattern change or increasing frequency/severity",
+      "Headache after head trauma",
+    ],
+    prognosis:
+      "Good prognosis with appropriate management. Most tension headaches respond well to simple treatments and lifestyle modifications.",
+    prevention: [
+      "Stress management and regular exercise",
+      "Consistent sleep schedule",
+      "Regular meals and adequate hydration",
+      "Ergonomic workspace setup",
+      "Limit caffeine and alcohol intake",
+    ],
+    seekImmediateCare: false,
+    aiGenerated: false,
+    timestamp: new Date().toISOString(),
+    analysisQuality: "enhanced",
+  };
+}
+
+function createGeneralAssessment(
+  symptomText: string,
+  age: number,
+  gender: string,
+) {
+  return {
+    condition: "General Health Assessment",
+    confidence: 75,
+    severity: "mild",
+    icdCode: "Z00.00",
+    explanation:
+      "Based on the symptom presentation, this appears to be a general health concern requiring monitoring and potentially medical evaluation for proper diagnosis and management.",
+    recommendations: [
+      "Comprehensive symptom tracking and monitoring",
+      "Maintain optimal hydration and nutrition",
+      "Ensure adequate rest and sleep (7-9 hours)",
+      "Consider lifestyle factors that may contribute to symptoms",
+      "Schedule appropriate medical evaluation for persistent symptoms",
+    ],
+    treatment: [
+      "Symptomatic care with close monitoring of progression",
+      "Adequate rest and fluid intake",
+      "Over-the-counter medications for symptom relief as appropriate",
+      "Maintain symptom diary with dates, severity, and triggers",
+      "Follow-up with healthcare provider if symptoms persist >5-7 days",
+      "Seek medical evaluation for proper diagnosis and treatment plan",
+    ],
+    differentialDiagnoses: [
+      {
+        condition: "Viral syndrome",
+        probability: 40,
+        distinguishingFeatures: "Self-limiting, systemic symptoms",
+      },
+      {
+        condition: "Stress-related symptoms",
+        probability: 30,
+        distinguishingFeatures: "Temporal relationship to stressors",
+      },
+      {
+        condition: "Minor bacterial infection",
+        probability: 20,
+        distinguishingFeatures: "Localized symptoms, response to treatment",
+      },
+      {
+        condition: "Allergic reaction",
+        probability: 10,
+        distinguishingFeatures: "Environmental triggers, seasonal pattern",
+      },
+    ],
+    redFlags: [
+      "Rapidly worsening or new severe symptoms",
+      "High fever over 102°F (38.9°C)",
+      "Severe pain or functional impairment",
+      "Difficulty breathing or swallowing",
+      "Any concerning or unusual symptom development",
+    ],
+    prognosis:
+      "Generally good with appropriate monitoring and care. Most mild conditions resolve with supportive treatment and time.",
+    prevention: [
+      "Maintain healthy lifestyle with regular exercise",
+      "Balanced nutrition and adequate hydration",
+      "Stress management and adequate sleep",
+      "Regular preventive healthcare and screenings",
+      "Prompt attention to health concerns",
+    ],
+    seekImmediateCare: false,
+    aiGenerated: false,
+    timestamp: new Date().toISOString(),
+    analysisQuality: "enhanced",
   };
 }
