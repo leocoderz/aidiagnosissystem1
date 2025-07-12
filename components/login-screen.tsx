@@ -536,7 +536,8 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
               </Button>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-5">
+                        <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Name field - only for signup */}
             {authMode === "signup" && (
               <div className="space-y-2">
                 <Label
