@@ -120,9 +120,12 @@ export default function DoctorDashboard({
   });
   const { toast } = useToast();
 
-  // Load real patient data and vitals alerts from localStorage
+  // Load real patient data and vitals alerts from localStorage (clear existing data)
   useEffect(() => {
     const loadPatientData = () => {
+      // Clear existing simulated patient data
+      localStorage.removeItem("mediai_all_patients");
+      localStorage.removeItem("sympcare24_users");
       try {
         const storedPatients = localStorage.getItem("mediai_all_patients");
         if (storedPatients) {
