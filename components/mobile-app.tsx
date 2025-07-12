@@ -466,6 +466,57 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
           value="dashboard"
           className="p-6 space-y-6 animate-fade-in"
         >
+          {/* Vitals Alerts */}
+          {vitalsAlerts.length > 0 && (
+            <Card className="border-0 bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-xl">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-2">
+                    <AlertTriangle className="h-6 w-6 animate-pulse" />
+                    <h3 className="text-lg font-bold">Vitals Alert</h3>
+                  </div>
+                  <Badge variant="secondary" className="bg-white/20 text-white">
+                    {vitalsAlerts.length} Active
+                  </Badge>
+                </div>
+                <div className="space-y-2">
+                  {vitalsAlerts.slice(0, 2).map((alert: any, index: number) => (
+                    <div key={index} className="bg-white/10 rounded-lg p-3">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-medium text-sm">{alert.vital}</p>
+                          <p className="text-xs text-white/80">
+                            {alert.message}
+                          </p>
+                        </div>
+                        <Badge
+                          variant={
+                            alert.severity === "critical"
+                              ? "destructive"
+                              : "default"
+                          }
+                          className="text-xs"
+                        >
+                          {alert.severity}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                  {vitalsAlerts.length > 2 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full text-white hover:bg-white/10"
+                      onClick={() => setActiveTab("devices")}
+                    >
+                      View {vitalsAlerts.length - 2} more alerts
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Emergency Button */}
           <Card className="border-0 bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-xl">
             <CardContent className="p-6">
