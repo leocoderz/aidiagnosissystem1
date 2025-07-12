@@ -1025,7 +1025,7 @@ export default function DoctorDashboard({
           </div>
 
           {selectedPatient ? (
-            <PatientHealthReport patient={selectedPatient} />
+            <PatientHealthReport patient={selectedPatient} doctor={user} />
           ) : (
             <Card className="border-0 bg-gradient-to-r from-purple-50 to-pink-50 shadow-lg">
               <CardContent className="p-12 text-center">
