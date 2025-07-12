@@ -56,7 +56,16 @@ import PatientHealthReport from "@/components/patient-health-report";
 // import type { User as UserType } from "@/types/user";
 
 interface DoctorDashboardProps {
-  user: UserType;
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    avatar?: string;
+    type: "patient" | "doctor";
+    specialization?: string;
+    licenseNumber?: string;
+    hospital?: string;
+  };
   onLogout: () => void;
 }
 
