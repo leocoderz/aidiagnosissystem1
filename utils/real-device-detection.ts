@@ -11,10 +11,13 @@ export interface RealWearableDevice {
     | "polar"
     | "unknown";
   isConnected: boolean;
+  connectionType: "bluetooth" | "wifi" | "both";
   batteryLevel?: number;
   lastSync?: string;
   capabilities: string[];
   serialNumber?: string;
+  ipAddress?: string; // For Wi-Fi connected devices
+  macAddress?: string; // For device identification
 }
 
 // Web Bluetooth API device detection
