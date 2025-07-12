@@ -2,7 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, name, type, isWelcome = true } = await request.json();
+    const {
+      email,
+      name,
+      type,
+      isWelcome = true,
+      isPasswordReset = false,
+      isPasswordChanged = false,
+      resetLink,
+      resetToken,
+    } = await request.json();
 
     if (!email || !name || !type) {
       return NextResponse.json(
