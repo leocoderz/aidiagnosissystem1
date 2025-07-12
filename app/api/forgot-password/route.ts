@@ -98,21 +98,24 @@ export async function POST(request: NextRequest) {
 
     // Send password reset email
     try {
-      const emailResponse = await fetch("/api/send-email", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const emailResponse = await fetch(
+        `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/send-email`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email,
+            name: userName,
+            type: userType,
+            isWelcome: false,
+            isPasswordReset: true,
+            resetLink,
+            resetToken,
+          }),
         },
-        body: JSON.stringify({
-          email,
-          name: userName,
-          type: userType,
-          isWelcome: false,
-          isPasswordReset: true,
-          resetLink,
-          resetToken,
-        }),
-      });
+      );
 
       if (!emailResponse.ok) {
         throw new Error("Failed to send reset email");
