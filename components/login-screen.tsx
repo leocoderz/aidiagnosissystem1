@@ -394,10 +394,22 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
       licenseNumber: "",
       hospital: "",
     });
+    setForgotPasswordSent(false);
   };
 
   const switchAuthMode = () => {
-    setAuthMode(authMode === "signin" ? "signup" : "signin");
+    if (authMode === "signin") {
+      setAuthMode("signup");
+    } else if (authMode === "signup") {
+      setAuthMode("signin");
+    } else if (authMode === "forgot") {
+      setAuthMode("signin");
+    }
+    resetForm();
+  };
+
+  const showForgotPassword = () => {
+    setAuthMode("forgot");
     resetForm();
   };
 
