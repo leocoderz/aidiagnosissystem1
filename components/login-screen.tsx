@@ -619,9 +619,10 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                   ) : (
                     <Eye className="h-4 w-4" />
                   )}
-                </Button>
+                                </Button>
               </div>
             </div>
+            )}
 
             {authMode === "signup" && (
               <div className="space-y-2">
