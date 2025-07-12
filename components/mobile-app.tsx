@@ -516,10 +516,10 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
                   </p>
                   <p className="text-xs text-white/70">
                     {isDetectingDevices
-                      ? "Scanning for wearable devices..."
+                      ? "Scanning Bluetooth & Wi-Fi..."
                       : isConnected && lastSync
-                        ? `Battery: ${batteryLevel}% • Last sync: ${new Date(lastSync).toLocaleTimeString()}`
-                        : "Tap to scan for real wearable devices"}
+                        ? `${realDevices.find((d) => d.isConnected)?.connectionType?.toUpperCase() || "UNKNOWN"} • ${hasRealData ? "Real Data ✓" : "No Data ✗"} • ${new Date(lastSync).toLocaleTimeString()}`
+                        : "Tap to scan for real wearable devices (BT/Wi-Fi)"}
                   </p>
                 </div>
               </div>
