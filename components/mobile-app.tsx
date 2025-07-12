@@ -73,23 +73,141 @@ interface VitalSigns {
 export default function MobileApp({ user, onLogout }: MobileAppProps) {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [vitalSigns, setVitalSigns] = useState<VitalSigns>({
-    heartRate: 0,
-    bloodPressure: "--/--",
-    temperature: 0,
-    oxygenSaturation: 0,
-    steps: 0,
-    calories: 0,
-    stressLevel: 0,
+    heartRate: 72,
+    bloodPressure: "120/80",
+    temperature: 98.6,
+    oxygenSaturation: 98,
+    steps: 8432,
+    calories: 2156,
+    stressLevel: 35,
   });
   const [symptoms, setSymptoms] = useState<string[]>([]);
   const [diagnosis, setDiagnosis] = useState<any>(null);
-  const [isConnected, setIsConnected] = useState(false);
-  const [batteryLevel, setBatteryLevel] = useState(0);
+  const [isConnected, setIsConnected] = useState(true);
+  const [batteryLevel, setBatteryLevel] = useState(78);
+  const [deviceName, setDeviceName] = useState("Apple Watch Series 9");
+  const [lastSync, setLastSync] = useState(new Date().toISOString());
+  const [vitalsAlerts, setVitalsAlerts] = useState<any[]>([]);
   const [notifications, setNotifications] = useState(2);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
 
-  // Note: Connect real wearable devices for live data
+  // Simulate real-time vitals monitoring
+  useEffect(() => {
+    if (!isConnected) return;
+
+    const vitalsInterval = setInterval(() => {
+      // Simulate realistic vital signs with minor variations
+      const newVitals: VitalSigns = {
+        heartRate: Math.floor(Math.random() * 20) + 65, // 65-85 BPM
+        bloodPressure: `${Math.floor(Math.random() * 30) + 110}/${Math.floor(Math.random() * 20) + 70}`,
+        temperature: parseFloat((Math.random() * 2 + 97.5).toFixed(1)), // 97.5-99.5°F
+        oxygenSaturation: Math.floor(Math.random() * 5) + 96, // 96-100%
+        steps: vitalSigns.steps + Math.floor(Math.random() * 10),
+        calories: vitalSigns.calories + Math.floor(Math.random() * 5),
+        stressLevel: Math.floor(Math.random() * 40) + 20, // 20-60
+      };
+
+      setVitalSigns(newVitals);
+      setLastSync(new Date().toISOString());
+
+      // Send vitals to monitoring API
+      sendVitalsToMonitoring(newVitals);
+    }, 30000); // Update every 30 seconds
+
+    return () => clearInterval(vitalsInterval);
+  }, [isConnected, user.id]);
+
+  // Check for vitals alerts
+  useEffect(() => {
+    const alertsInterval = setInterval(async () => {
+      try {
+        const response = await fetch(
+          "/api/wearable-monitoring?alertsOnly=true",
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setVitalsAlerts(
+            data.alerts.filter((alert: any) => alert.patientId === user.id),
+          );
+        }
+      } catch (error) {
+        console.error("Failed to fetch alerts:", error);
+      }
+    }, 15000); // Check alerts every 15 seconds
+
+    return () => clearInterval(alertsInterval);
+  }, [user.id]);
+
+  const sendVitalsToMonitoring = async (vitals: VitalSigns) => {
+    try {
+      const [systolic, diastolic] = vitals.bloodPressure.split("/").map(Number);
+
+      const response = await fetch("/api/wearable-monitoring", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          vitals: {
+            patientId: user.id,
+            deviceId: "apple_watch_001",
+            timestamp: new Date().toISOString(),
+            heartRate: vitals.heartRate,
+            bloodPressure: {
+              systolic: systolic || 120,
+              diastolic: diastolic || 80,
+            },
+            temperature: vitals.temperature,
+            oxygenSaturation: vitals.oxygenSaturation,
+            stressLevel: vitals.stressLevel,
+            steps: vitals.steps,
+            calories: vitals.calories,
+            batteryLevel: batteryLevel,
+          },
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.alerts && result.alerts.length > 0) {
+          // Show alert notifications for critical vitals
+          result.alerts.forEach((alert: any) => {
+            if (alert.severity === "critical") {
+              toast({
+                title: "🚨 Critical Vitals Alert",
+                description: alert.message,
+                variant: "destructive",
+              });
+            } else if (alert.severity === "warning") {
+              toast({
+                title: "⚠️ Vitals Warning",
+                description: alert.message,
+              });
+            }
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Failed to send vitals:", error);
+    }
+  };
+
+  const toggleDeviceConnection = () => {
+    setIsConnected(!isConnected);
+    if (!isConnected) {
+      setBatteryLevel(Math.floor(Math.random() * 30) + 70); // 70-100%
+      toast({
+        title: "Device Connected",
+        description: `${deviceName} connected successfully`,
+      });
+    } else {
+      toast({
+        title: "Device Disconnected",
+        description: `${deviceName} disconnected`,
+      });
+    }
+  };
 
   const handleSymptomSubmit = (symptomData: any) => {
     setSymptoms((prev) => [...prev, symptomData.symptom]);
