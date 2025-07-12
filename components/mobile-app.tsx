@@ -31,6 +31,7 @@ import {
   RefreshCw,
   Calendar,
   MapPin,
+  Brain,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import SymptomInput from "@/components/symptom-input";
