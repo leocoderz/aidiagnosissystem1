@@ -11,7 +11,15 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Brain, AlertTriangle, CheckCircle, Lightbulb } from "lucide-react";
+import {
+  Brain,
+  AlertTriangle,
+  CheckCircle,
+  Lightbulb,
+  Activity,
+  Stethoscope,
+  Clock,
+} from "lucide-react";
 
 interface DiagnosisResultsProps {
   diagnosis: any;
@@ -27,88 +35,176 @@ export default function DiagnosisResults({ diagnosis }: DiagnosisResultsProps) {
             No Diagnosis Available
           </h3>
           <p className="text-gray-600">
-            Add symptoms and request diagnosis to see results
+            Add symptoms and request AI analysis to see comprehensive medical
+            assessment
           </p>
         </CardContent>
       </Card>
     );
   }
 
+  const getSeverityColor = (severity: string) => {
+    switch (severity?.toLowerCase()) {
+      case "critical":
+        return "bg-red-500 text-white";
+      case "severe":
+        return "bg-red-400 text-white";
+      case "moderate":
+        return "bg-yellow-500 text-white";
+      case "mild":
+        return "bg-green-500 text-white";
+      default:
+        return "bg-gray-500 text-white";
+    }
+  };
+
+  const getConfidenceColor = (confidence: number) => {
+    if (confidence >= 90) return "text-green-600 border-green-600";
+    if (confidence >= 80) return "text-blue-600 border-blue-600";
+    if (confidence >= 70) return "text-yellow-600 border-yellow-600";
+    return "text-red-600 border-red-600";
+  };
+
+  const formatTimestamp = (timestamp: string) => {
+    try {
+      return new Date(timestamp).toLocaleString();
+    } catch {
+      return "Recently generated";
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* Header Card with Key Information */}
+      <Card className="border-l-4 border-l-blue-500">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Brain className="h-6 w-6 text-blue-600" />
+              <div>
+                <CardTitle className="text-xl">{diagnosis.condition}</CardTitle>
+                <CardDescription className="flex items-center gap-2 mt-1">
+                  {diagnosis.icdCode && (
+                    <Badge variant="outline" className="text-xs">
+                      ICD-10: {diagnosis.icdCode}
+                    </Badge>
+                  )}
+                  {diagnosis.analysisQuality && (
+                    <Badge variant="outline" className="text-xs">
+                      {diagnosis.analysisQuality} analysis
+                    </Badge>
+                  )}
+                </CardDescription>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge className={getSeverityColor(diagnosis.severity)}>
+                {diagnosis.severity?.toUpperCase() || "UNKNOWN"}
+              </Badge>
+              <Badge
+                variant="outline"
+                className={getConfidenceColor(diagnosis.confidence)}
+              >
+                {diagnosis.confidence}% Confidence
+              </Badge>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-4 text-sm text-gray-600">
+            <div className="flex items-center gap-1">
+              <Clock className="h-4 w-4" />
+              <span>{formatTimestamp(diagnosis.timestamp)}</span>
+            </div>
+            {diagnosis.aiGenerated && (
+              <div className="flex items-center gap-1">
+                <Stethoscope className="h-4 w-4" />
+                <span>AI-Generated Analysis</span>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Emergency Alert */}
+      {diagnosis.seekImmediateCare && (
+        <Alert className="border-red-500 bg-red-50">
+          <AlertTriangle className="h-4 w-4 text-red-600" />
+          <AlertTitle className="text-red-800">
+            ⚠️ Urgent Medical Attention Required
+          </AlertTitle>
+          <AlertDescription className="text-red-700">
+            This condition may require immediate medical evaluation. Consider
+            seeking emergency care or contacting your healthcare provider
+            promptly.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Detailed Analysis Tabs */}
       <Tabs defaultValue="diagnosis" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="diagnosis">Diagnosis</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4 text-sm">
+          <TabsTrigger value="diagnosis">Assessment</TabsTrigger>
           <TabsTrigger value="treatment">Treatment</TabsTrigger>
-          <TabsTrigger value="recommendations">Care Plan</TabsTrigger>
+          <TabsTrigger value="differential">Differential</TabsTrigger>
+          <TabsTrigger value="monitoring">Follow-up</TabsTrigger>
         </TabsList>
 
         <TabsContent value="diagnosis">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>{diagnosis.condition}</span>
-                <Badge
-                  variant={
-                    diagnosis.severity === "critical" ||
-                    diagnosis.severity === "severe"
-                      ? "destructive"
-                      : diagnosis.severity === "moderate"
-                        ? "secondary"
-                        : "default"
-                  }
-                >
-                  {diagnosis.severity}
-                </Badge>
+              <CardTitle className="flex items-center gap-2">
+                <Brain className="h-5 w-5 text-blue-600" />
+                Clinical Assessment
               </CardTitle>
-              <CardDescription>
-                {diagnosis.explanation?.substring(0, 200)}
-                {diagnosis.explanation?.length > 200 ? "..." : ""}
-              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-medium">Confidence Level</span>
-                  <span className="text-sm font-semibold">
-                    {diagnosis.confidence}%
-                  </span>
+                <div className="bg-blue-50 p-6 rounded-lg border-l-4 border-blue-500">
+                  <p className="text-gray-800 leading-relaxed">
+                    {diagnosis.explanation}
+                  </p>
                 </div>
-                <Progress value={diagnosis.confidence} className="h-3" />
               </div>
 
-              {diagnosis.seekImmediateCare && (
-                <Alert className="border-red-500 bg-red-50">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertTitle>Urgent Medical Attention Required</AlertTitle>
-                  <AlertDescription>
-                    This diagnosis suggests you should seek immediate medical
-                    care.
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              {diagnosis.differentialDiagnoses &&
-                diagnosis.differentialDiagnoses.length > 0 && (
+              {diagnosis.clinicalEvidence &&
+                diagnosis.clinicalEvidence.length > 0 && (
                   <div>
-                    <h4 className="font-semibold mb-3">
-                      Alternative Diagnoses
+                    <h4 className="font-semibold mb-3 flex items-center gap-2 text-green-700">
+                      <CheckCircle className="h-4 w-4" />
+                      Supporting Clinical Evidence
                     </h4>
-                    <div className="space-y-2">
-                      {diagnosis.differentialDiagnoses.map(
-                        (diff: any, index: number) => (
+                    <div className="space-y-3">
+                      {diagnosis.clinicalEvidence.map(
+                        (evidence: string, index: number) => (
                           <div
                             key={index}
-                            className="flex justify-between items-center p-2 bg-gray-50 rounded"
+                            className="flex items-start gap-3 p-3 bg-green-50 rounded-lg"
                           >
-                            <span className="text-sm">{diff.condition}</span>
-                            <Badge variant="outline">{diff.probability}%</Badge>
+                            <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0" />
+                            <span className="text-gray-800">{evidence}</span>
                           </div>
                         ),
                       )}
                     </div>
                   </div>
                 )}
+
+              {/* Confidence Progress Bar */}
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium text-gray-700">
+                    Diagnostic Confidence
+                  </span>
+                  <span className="text-sm text-gray-600">
+                    {diagnosis.confidence}%
+                  </span>
+                </div>
+                <Progress value={diagnosis.confidence} className="h-2" />
+                <p className="text-xs text-gray-600 mt-1">
+                  Based on symptom analysis and medical knowledge base
+                </p>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -116,108 +212,237 @@ export default function DiagnosisResults({ diagnosis }: DiagnosisResultsProps) {
         <TabsContent value="treatment">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <CheckCircle className="mr-2 h-5 w-5 text-green-600" />
-                Treatment Plan
+              <CardTitle className="flex items-center gap-2">
+                <Lightbulb className="h-5 w-5 text-amber-600" />
+                Evidence-Based Treatment Plan
               </CardTitle>
-              <CardDescription>Recommended treatment steps</CardDescription>
             </CardHeader>
             <CardContent>
-              {diagnosis.treatment && diagnosis.treatment.length > 0 ? (
-                <div className="space-y-3">
-                  {diagnosis.treatment.map(
-                    (treatment: string, index: number) => (
-                      <div key={index} className="flex items-start space-x-3">
-                        <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                        <span>{treatment}</span>
-                      </div>
-                    ),
-                  )}
-                </div>
-              ) : (
-                <p className="text-gray-600">
-                  No specific treatment recommendations available.
-                </p>
-              )}
-
-              {diagnosis.redFlags && diagnosis.redFlags.length > 0 && (
-                <div className="mt-6">
-                  <h4 className="font-semibold mb-3 text-red-600">
-                    Warning Signs
+              <div className="space-y-6">
+                <div>
+                  <h4 className="font-semibold mb-4 text-green-700 flex items-center gap-2">
+                    <Activity className="h-4 w-4" />
+                    Therapeutic Interventions
                   </h4>
-                  <div className="space-y-2">
-                    {diagnosis.redFlags.map((flag: string, index: number) => (
-                      <div key={index} className="flex items-start space-x-2">
-                        <AlertTriangle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
-                        <span className="text-sm text-red-700">{flag}</span>
-                      </div>
-                    ))}
+                  <div className="space-y-3">
+                    {diagnosis.treatment && diagnosis.treatment.length > 0 ? (
+                      diagnosis.treatment.map((item: string, index: number) => (
+                        <div
+                          key={index}
+                          className="flex items-start space-x-3 p-4 bg-green-50 rounded-lg border-l-4 border-green-400"
+                        >
+                          <div className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
+                            {index + 1}
+                          </div>
+                          <span className="text-gray-800 leading-relaxed">
+                            {item}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-gray-600 italic">
+                        No specific treatment recommendations available.
+                      </p>
+                    )}
                   </div>
                 </div>
-              )}
+
+                {diagnosis.redFlags && diagnosis.redFlags.length > 0 && (
+                  <div>
+                    <h4 className="font-semibold mb-4 text-red-700 flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4" />
+                      Critical Warning Signs
+                    </h4>
+                    <div className="space-y-3">
+                      {diagnosis.redFlags.map((flag: string, index: number) => (
+                        <div
+                          key={index}
+                          className="flex items-start space-x-3 p-4 bg-red-50 rounded-lg border-l-4 border-red-500"
+                        >
+                          <AlertTriangle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+                          <span className="text-red-800 font-medium leading-relaxed">
+                            {flag}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="recommendations">
-          <div className="space-y-4">
-            {diagnosis.recommendations &&
-            diagnosis.recommendations.length > 0 ? (
-              diagnosis.recommendations.map((rec: string, index: number) => (
-                <Card key={index}>
-                  <CardContent className="pt-6">
-                    <div className="flex items-start space-x-4">
-                      <div className="p-2 rounded-full bg-blue-100 text-blue-600">
-                        <Lightbulb className="h-4 w-4" />
+        <TabsContent value="differential">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Brain className="h-5 w-5 text-purple-600" />
+                Differential Diagnosis
+              </CardTitle>
+              <CardDescription>
+                Alternative conditions to consider based on symptom analysis
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {diagnosis.differentialDiagnoses &&
+                diagnosis.differentialDiagnoses.length > 0 ? (
+                  diagnosis.differentialDiagnoses.map(
+                    (diff: any, index: number) => (
+                      <div
+                        key={index}
+                        className="p-4 border rounded-lg bg-purple-50 hover:bg-purple-100 transition-colors"
+                      >
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="font-semibold text-purple-800">
+                            {diff.condition}
+                          </h4>
+                          <div className="flex items-center gap-2">
+                            <Badge
+                              variant="outline"
+                              className="text-purple-600"
+                            >
+                              {diff.probability}% probability
+                            </Badge>
+                            <div className="w-16 bg-purple-200 rounded-full h-2">
+                              <div
+                                className="bg-purple-600 h-2 rounded-full"
+                                style={{ width: `${diff.probability}%` }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        {diff.distinguishingFeatures && (
+                          <p className="text-sm text-purple-700">
+                            <strong>Key distinguishing features:</strong>{" "}
+                            {diff.distinguishingFeatures}
+                          </p>
+                        )}
                       </div>
-                      <div className="flex-1">
-                        <p className="text-gray-600">{rec}</p>
+                    ),
+                  )
+                ) : (
+                  <div className="text-center py-8">
+                    <Brain className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                    <p className="text-gray-600">
+                      No differential diagnoses available in current analysis.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="monitoring">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-blue-600" />
+                Monitoring & Follow-up Plan
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div>
+                  <h4 className="font-semibold mb-4 text-blue-700">
+                    Care Recommendations
+                  </h4>
+                  <div className="space-y-3">
+                    {diagnosis.recommendations &&
+                    diagnosis.recommendations.length > 0 ? (
+                      diagnosis.recommendations.map(
+                        (item: string, index: number) => (
+                          <div
+                            key={index}
+                            className="flex items-start space-x-3 p-3 bg-blue-50 rounded-lg"
+                          >
+                            <CheckCircle className="h-4 w-4 text-blue-500 mt-1 flex-shrink-0" />
+                            <span className="text-gray-800">{item}</span>
+                          </div>
+                        ),
+                      )
+                    ) : (
+                      <p className="text-gray-600 italic">
+                        No specific care recommendations provided.
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {diagnosis.prognosis && (
+                  <div>
+                    <h4 className="font-semibold mb-3 text-green-700">
+                      Expected Outcome & Prognosis
+                    </h4>
+                    <div className="p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
+                      <p className="text-gray-800 leading-relaxed">
+                        {diagnosis.prognosis}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {diagnosis.prevention && diagnosis.prevention.length > 0 && (
+                  <div>
+                    <h4 className="font-semibold mb-3 text-indigo-700">
+                      Prevention Strategies
+                    </h4>
+                    <div className="space-y-2">
+                      {diagnosis.prevention.map(
+                        (item: string, index: number) => (
+                          <div
+                            key={index}
+                            className="flex items-start space-x-3 p-3 bg-indigo-50 rounded-lg"
+                          >
+                            <div className="w-2 h-2 bg-indigo-500 rounded-full mt-2 flex-shrink-0" />
+                            <span className="text-gray-800">{item}</span>
+                          </div>
+                        ),
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {diagnosis.followUpPlan &&
+                  diagnosis.followUpPlan.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold mb-3 text-amber-700">
+                        Follow-up Schedule
+                      </h4>
+                      <div className="space-y-2">
+                        {diagnosis.followUpPlan.map(
+                          (item: string, index: number) => (
+                            <div
+                              key={index}
+                              className="flex items-start space-x-3 p-3 bg-amber-50 rounded-lg"
+                            >
+                              <Clock className="h-4 w-4 text-amber-600 mt-1 flex-shrink-0" />
+                              <span className="text-gray-800">{item}</span>
+                            </div>
+                          ),
+                        )}
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              ))
-            ) : (
-              <Card>
-                <CardContent className="pt-6 text-center">
-                  <p className="text-gray-600">
-                    No specific recommendations available.
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-
-            {diagnosis.prognosis && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Prognosis</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-700">{diagnosis.prognosis}</p>
-                </CardContent>
-              </Card>
-            )}
-
-            {diagnosis.prevention && diagnosis.prevention.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Prevention</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {diagnosis.prevention.map((prev: string, index: number) => (
-                      <div key={index} className="flex items-start space-x-2">
-                        <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                        <span className="text-sm">{prev}</span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+                  )}
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Medical Disclaimer */}
+      <Alert>
+        <Stethoscope className="h-4 w-4" />
+        <AlertTitle>Medical Disclaimer</AlertTitle>
+        <AlertDescription>
+          This AI analysis is for educational and informational purposes only.
+          It should never replace professional medical evaluation, diagnosis, or
+          treatment. Always consult qualified healthcare providers for medical
+          decisions and urgent health concerns.
+        </AlertDescription>
+      </Alert>
     </div>
   );
 }
