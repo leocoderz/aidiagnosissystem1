@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bluetooth Test</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+      }
+      .status {
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 5px;
+      }
+      .success {
+        background: #d4edda;
+        color: #155724;
+      }
+      .error {
+        background: #f8d7da;
+        color: #721c24;
+      }
+      .warning {
+        background: #fff3cd;
+        color: #856404;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Bluetooth Web API Test</h1>
+    <div id="status"></div>
+    <button onclick="testBluetooth()" id="testBtn">
+      Test Bluetooth Access
+    </button>
+
+    <script>
+      function log(message, type = "info") {
+        const status = document.getElementById("status");
+        const div = document.createElement("div");
+        div.className = `status ${type}`;
+        div.textContent = message;
+        status.appendChild(div);
+      }
+
+      async function testBluetooth() {
+        const btn = document.getElementById("testBtn");
+        btn.disabled = true;
+
+        log("Testing Bluetooth Web API...");
+
+        // Check secure context
+        if (!window.isSecureContext) {
+          log("❌ Not in secure context (HTTPS required)", "error");
+          btn.disabled = false;
+          return;
+        }
+        log("✅ Secure context confirmed");
+
+        // Check Bluetooth availability
+        if (!("bluetooth" in navigator)) {
+          log("❌ Bluetooth Web API not available", "error");
+          btn.disabled = false;
+          return;
+        }
+        log("✅ Bluetooth Web API available");
+
+        try {
+          // Check permissions
+          const permission = await navigator.permissions?.query?.({
+            name: "bluetooth",
+          });
+          if (permission) {
+            log(`📋 Bluetooth permission: ${permission.state}`);
+          }
+
+          // Test Bluetooth availability
+          const available = await navigator.bluetooth.getAvailability();
+          log(`📡 Bluetooth adapter available: ${available}`);
+
+          // Try to request device
+          log("🔍 Requesting Bluetooth device...");
+          const device = await navigator.bluetooth.requestDevice({
+            filters: [{ services: ["heart_rate"] }],
+            optionalServices: ["battery_service"],
+          });
+
+          log(`✅ Device selected: ${device.name || "Unknown"}`, "success");
+        } catch (error) {
+          log(`❌ Error: ${error.message}`, "error");
+
+          if (error.message.includes("permissions policy")) {
+            log(
+              "💡 Suggestion: Bluetooth may be blocked by browser policy",
+              "warning",
+            );
+          } else if (error.name === "NotFoundError") {
+            log("💡 Suggestion: No devices found or user cancelled", "warning");
+          } else if (error.name === "SecurityError") {
+            log("💡 Suggestion: Security policy blocking access", "warning");
+          }
+        }
+
+        btn.disabled = false;
+      }
+
+      // Auto-run initial checks
+      window.onload = () => {
+        log("🚀 Starting Bluetooth compatibility check...");
+
+        if (!window.isSecureContext) {
+          log("⚠️ Warning: Not in secure context", "warning");
+        }
+
+        if (!("bluetooth" in navigator)) {
+          log("⚠️ Warning: Bluetooth Web API not supported", "warning");
+        }
+      };
+    </script>
+  </body>
+</html>
