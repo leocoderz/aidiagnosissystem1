@@ -49,8 +49,49 @@ export async function POST(request: NextRequest) {
           </div>
           
           ${
-            isWelcome
+            isPasswordReset
               ? `
+            <h2 style="color: #1e293b; text-align: center; margin-bottom: 20px;">Password Reset Request</h2>
+            <div style="background: #f59e0b; color: white; padding: 20px; border-radius: 8px; margin-bottom: 25px; text-align: center;">
+              <h3 style="margin: 0 0 10px 0; font-size: 18px;">🔑 Reset Your Password</h3>
+              <p style="margin: 0; opacity: 0.9;">We received a request to reset your password.</p>
+            </div>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${resetLink}" style="background: #dc2626; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; font-size: 16px;">
+                Reset Password
+              </a>
+            </div>
+            
+            <div style="background: #fef3c7; border: 1px solid #f59e0b; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+              <p style="margin: 0; color: #92400e; font-size: 14px;"><strong>Security Notice:</strong></p>
+              <ul style="color: #92400e; font-size: 14px; margin: 10px 0 0 0; padding-left: 20px;">
+                <li>This link will expire in 24 hours</li>
+                <li>If you didn't request this reset, please ignore this email</li>
+                <li>Never share this link with anyone</li>
+                <li>Reset token: ${resetToken ? resetToken.substring(0, 8) + "..." : "N/A"}</li>
+              </ul>
+            </div>
+          `
+              : isPasswordChanged
+                ? `
+            <h2 style="color: #1e293b; text-align: center; margin-bottom: 20px;">Password Changed Successfully</h2>
+            <div style="background: #10b981; color: white; padding: 20px; border-radius: 8px; margin-bottom: 25px; text-align: center;">
+              <h3 style="margin: 0 0 10px 0; font-size: 18px;">🔒 Your Password Has Been Updated</h3>
+              <p style="margin: 0; opacity: 0.9;">Your account is now secured with your new password.</p>
+            </div>
+            
+            <div style="background: #dcfce7; border: 1px solid #22c55e; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+              <p style="margin: 0; color: #166534; font-size: 14px;"><strong>Password Change Details:</strong></p>
+              <ul style="color: #166534; font-size: 14px; margin: 10px 0 0 0; padding-left: 20px;">
+                <li>Change completed: ${new Date().toLocaleString()}</li>
+                <li>Account: ${email}</li>
+                <li>If this wasn't you, contact support immediately</li>
+              </ul>
+            </div>
+          `
+                : isWelcome
+                  ? `
             <h2 style="color: #1e293b; text-align: center; margin-bottom: 20px;">Welcome aboard, ${name}!</h2>
             <div style="background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
               <h3 style="margin: 0 0 10px 0; font-size: 18px;">Your ${type} account is ready!</h3>
@@ -78,7 +119,7 @@ export async function POST(request: NextRequest) {
               </ul>
             </div>
           `
-              : `
+                  : `
             <h2 style="color: #1e293b; text-align: center; margin-bottom: 20px;">Welcome back, ${name}!</h2>
             <div style="background: #10b981; color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
               <p style="margin: 0;">✅ Successfully signed in to your ${type} account</p>
@@ -97,13 +138,24 @@ export async function POST(request: NextRequest) {
 
     // In production, you would use an email service like SendGrid, Nodemailer, etc.
     // For now, we'll simulate sending an email and log the details
+    const emailType = isPasswordReset
+      ? "Password Reset"
+      : isPasswordChanged
+        ? "Password Changed"
+        : isWelcome
+          ? "Welcome Email"
+          : "Login Notification";
+
     console.log("=== EMAIL NOTIFICATION ===");
     console.log(`To: ${email}`);
     console.log(`Subject: ${subject}`);
     console.log(`Message: ${emailMessage}`);
     console.log(`User: ${name} (${type})`);
-    console.log(`Type: ${isWelcome ? "Welcome Email" : "Login Notification"}`);
-    console.log(`HTML Content: ${htmlContent.substring(0, 200)}...`);
+    console.log(`Type: ${emailType}`);
+    if (isPasswordReset) {
+      console.log(`Reset Link: ${resetLink}`);
+      console.log(`Reset Token: ${resetToken}`);
+    }
     console.log("===========================");
 
     // Simulate email sending delay
@@ -121,15 +173,20 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: isWelcome
-        ? "Welcome email sent successfully"
-        : "Login notification sent successfully",
+      message: isPasswordReset
+        ? "Password reset email sent successfully"
+        : isPasswordChanged
+          ? "Password change confirmation sent successfully"
+          : isWelcome
+            ? "Welcome email sent successfully"
+            : "Login notification sent successfully",
       details: {
         email,
         name,
         type,
-        emailType: isWelcome ? "welcome" : "login",
+        emailType,
         timestamp: new Date().toISOString(),
+        ...(isPasswordReset && { resetLinkSent: !!resetLink }),
       },
     });
   } catch (error) {
