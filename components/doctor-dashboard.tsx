@@ -50,10 +50,8 @@ import {
   BarChart3,
   Users2,
   Zap,
-  Brain,
   Lightbulb,
   CheckCircle,
-  Shield,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import PatientHealthReport from "@/components/patient-health-report";
