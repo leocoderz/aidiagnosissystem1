@@ -180,8 +180,12 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
           );
         }
 
-        // In a real app, you'd verify the password here
-        // For now, we'll just check if the account exists
+        // Verify password matches
+        if (existingUser.password !== formData.password) {
+          throw new Error(
+            "Invalid password. Please check your credentials and try again.",
+          );
+        }
 
         const user: LoginUser = {
           id: existingUser.id,
