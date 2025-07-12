@@ -46,6 +46,12 @@ import {
   WearableVitals,
   VitalAlert,
 } from "@/utils/vitals-monitoring";
+import { clearAllUsers, resetToRealDevicesOnly } from "@/utils/reset-system";
+import {
+  detectAllRealDevices,
+  RealWearableDevice,
+  getRealVitalsFromDevice,
+} from "@/utils/real-device-detection";
 
 interface MobileAppUser {
   id: string;
