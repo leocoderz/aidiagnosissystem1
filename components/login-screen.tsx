@@ -234,6 +234,9 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.name || formData.email}`,
       };
 
+      // Store password for authentication (in real app, this would be hashed)
+      const userWithPassword = { ...user, password: formData.password };
+
       if (activeTab === "patient") {
         user.age = Number.parseInt(formData.age) || 25;
         user.gender =
