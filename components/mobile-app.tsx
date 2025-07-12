@@ -600,8 +600,10 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
           value="dashboard"
           className="p-6 space-y-6 animate-fade-in"
         >
-          {/* System Reset Notice */}
-          <Card className="border-blue-200 bg-blue-50">
+          {/* Real Device Data Status Notice */}
+          <Card
+            className={`border-2 ${hasRealData ? "border-green-200 bg-green-50" : "border-orange-200 bg-orange-50"}`}
+          >
             <CardContent className="p-4">
               <div className="flex items-center space-x-3">
                 {hasRealData ? (
