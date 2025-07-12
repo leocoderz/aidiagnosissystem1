@@ -53,7 +53,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import PatientHealthReport from "@/components/patient-health-report";
-import type { User as UserType } from "@/types/user";
+// import type { User as UserType } from "@/types/user";
 
 interface DoctorDashboardProps {
   user: UserType;
