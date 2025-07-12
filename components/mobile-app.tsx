@@ -385,7 +385,10 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
               Quick Actions
             </h3>
             <div className="grid grid-cols-2 gap-4">
-              <Card className="border-0 bg-gradient-to-br from-blue-50 to-cyan-50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+              <Card
+                className="border-0 bg-gradient-to-br from-blue-50 to-cyan-50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer"
+                onClick={() => setActiveTab("symptoms")}
+              >
                 <CardContent className="p-6 text-center">
                   <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center mx-auto mb-3">
                     <Plus className="h-8 w-8 text-white" />
@@ -397,7 +400,16 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
                 </CardContent>
               </Card>
 
-              <Card className="border-0 bg-gradient-to-br from-purple-50 to-pink-50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+              <Card
+                className="border-0 bg-gradient-to-br from-purple-50 to-pink-50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer"
+                onClick={() => {
+                  toast({
+                    title: "Appointment Booking",
+                    description:
+                      "Appointment booking feature coming soon. Please call our clinic at (555) 123-4567.",
+                  });
+                }}
+              >
                 <CardContent className="p-6 text-center">
                   <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-3">
                     <Calendar className="h-8 w-8 text-white" />
