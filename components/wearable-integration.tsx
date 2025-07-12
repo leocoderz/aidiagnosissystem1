@@ -69,6 +69,7 @@ export default function WearableIntegration({
   const [wifiEnabled, setWifiEnabled] = useState(false);
   const [permissionGranted, setPermissionGranted] = useState(false);
   const [activeTab, setActiveTab] = useState<"bluetooth" | "wifi">("bluetooth");
+  const [demoMode, setDemoMode] = useState(false);
 
   const { toast } = useToast();
 
