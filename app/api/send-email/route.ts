@@ -137,8 +137,15 @@ export async function POST(request: NextRequest) {
       </div>
     `;
 
-    // In production, you would use an email service like SendGrid, Nodemailer, etc.
-    // For now, we'll simulate sending an email and log the details
+    // Configure Gmail SMTP with nodemailer
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: "natarajmurali56@gmail.com",
+        pass: "hdnw yoqy byxc dten",
+      },
+    });
+
     const emailType = isPasswordReset
       ? "Password Reset"
       : isPasswordChanged
@@ -147,30 +154,36 @@ export async function POST(request: NextRequest) {
           ? "Welcome Email"
           : "Login Notification";
 
-    console.log("=== EMAIL NOTIFICATION ===");
+    console.log("=== SENDING EMAIL VIA GMAIL ===");
     console.log(`To: ${email}`);
     console.log(`Subject: ${subject}`);
-    console.log(`Message: ${emailMessage}`);
-    console.log(`User: ${name} (${type})`);
     console.log(`Type: ${emailType}`);
     if (isPasswordReset) {
       console.log(`Reset Link: ${resetLink}`);
-      console.log(`Reset Token: ${resetToken}`);
     }
-    console.log("===========================");
+    console.log("================================");
 
-    // Simulate email sending delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // Send email via Gmail
+    try {
+      const mailOptions = {
+        from: {
+          name: "SympCare24",
+          address: "natarajmurali56@gmail.com",
+        },
+        to: email,
+        subject: subject,
+        html: htmlContent,
+        text: emailMessage, // Fallback text version
+      };
 
-    // In a real implementation, you would integrate with an email service:
-    /*
-    // Example with a hypothetical email service
-    const emailResult = await emailService.send({
-      to: email,
-      subject: subject,
-      html: htmlContent
-    });
-    */
+      const emailResult = await transporter.sendMail(mailOptions);
+
+      console.log("Email sent successfully:", emailResult.messageId);
+      console.log("Response:", emailResult.response);
+    } catch (emailError) {
+      console.error("Gmail sending error:", emailError);
+      throw new Error(`Failed to send email: ${emailError.message}`);
+    }
 
     return NextResponse.json({
       success: true,
