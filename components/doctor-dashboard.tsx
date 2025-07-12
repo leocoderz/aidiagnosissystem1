@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -50,13 +50,25 @@ import {
   BarChart3,
   Users2,
   Zap,
+  Lightbulb,
+  CheckCircle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { VitalAlert } from "@/utils/vitals-monitoring";
 import PatientHealthReport from "@/components/patient-health-report";
-import type { User as UserType } from "@/types/user";
+// import type { User as UserType } from "@/types/user";
 
 interface DoctorDashboardProps {
-  user: UserType;
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    avatar?: string;
+    type: "patient" | "doctor";
+    specialization?: string;
+    licenseNumber?: string;
+    hospital?: string;
+  };
   onLogout: () => void;
 }
 
@@ -92,6 +104,7 @@ export default function DoctorDashboard({
   const [patients, setPatients] = useState<Patient[]>([]);
   const [notifications, setNotifications] = useState(5);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [vitalsAlerts, setVitalsAlerts] = useState<VitalAlert[]>([]);
   const [showAddPatient, setShowAddPatient] = useState(false);
   const [isAddingPatient, setIsAddingPatient] = useState(false);
   const [newPatientData, setNewPatientData] = useState({
@@ -106,6 +119,78 @@ export default function DoctorDashboard({
     severity: "Low" as "Low" | "Medium" | "High" | "Critical",
   });
   const { toast } = useToast();
+
+  // Load real patient data and vitals alerts from localStorage (clear existing data)
+  useEffect(() => {
+    const loadPatientData = () => {
+      // Clear existing simulated patient data
+      localStorage.removeItem("mediai_all_patients");
+      localStorage.removeItem("sympcare24_users");
+      try {
+        const storedPatients = localStorage.getItem("mediai_all_patients");
+        if (storedPatients) {
+          const allPatients = JSON.parse(storedPatients);
+
+          // Convert stored patient data to dashboard format
+          const dashboardPatients: Patient[] = allPatients.map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            age: p.age || 30,
+            gender: p.gender || "other",
+            lastVisit: p.lastVisit || new Date().toLocaleDateString(),
+            condition: p.condition || "General Checkup",
+            severity: (p.severity || "Low") as
+              | "Low"
+              | "Medium"
+              | "High"
+              | "Critical",
+            vitals: p.vitals || {
+              heartRate: 72,
+              bloodPressure: "120/80",
+              temperature: 98.6,
+              oxygenSaturation: 98,
+            },
+            symptoms: p.symptoms || [],
+            aiDiagnosis: p.aiDiagnosis,
+          }));
+
+          setPatients(dashboardPatients);
+        }
+      } catch (error) {
+        console.error("Error loading patient data:", error);
+      }
+    };
+
+    const loadVitalsAlerts = () => {
+      try {
+        const alerts = JSON.parse(
+          localStorage.getItem("medical_vitals_alerts") || "[]",
+        );
+        const activeAlerts = alerts.filter(
+          (alert: VitalAlert) => alert.status === "active",
+        );
+        setVitalsAlerts(activeAlerts);
+
+        // Update notifications count to include vitals alerts
+        const criticalAlerts = activeAlerts.filter(
+          (alert: VitalAlert) => alert.severity === "critical",
+        ).length;
+        setNotifications(5 + criticalAlerts);
+      } catch (error) {
+        console.error("Failed to load vitals alerts:", error);
+      }
+    };
+
+    loadPatientData();
+    loadVitalsAlerts();
+
+    // Check for new vitals alerts every 30 seconds
+    const alertsInterval = setInterval(() => {
+      loadVitalsAlerts();
+    }, 30000);
+
+    return () => clearInterval(alertsInterval);
+  }, []);
 
   const filteredPatients = patients.filter(
     (patient) =>
@@ -143,6 +228,7 @@ export default function DoctorDashboard({
     urgentCases: urgentCases.length,
     totalSymptoms: patients.reduce((acc, p) => acc + p.symptoms.length, 0),
     aiDiagnoses: patients.filter((p) => p.aiDiagnosis).length,
+    realDevicePatients: patients.filter((p) => p.vitals?.lastUpdated).length,
   };
 
   const getTimeOfDay = () => {
@@ -376,7 +462,7 @@ export default function DoctorDashboard({
       {/* Enhanced Navigation */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="bg-white border-b border-gray-100 sticky top-0 z-40 backdrop-blur-sm bg-white/90">
-          <TabsList className="grid w-full grid-cols-4 h-16 bg-transparent rounded-none border-0">
+          <TabsList className="grid w-full grid-cols-6 h-16 bg-transparent rounded-none border-0">
             <TabsTrigger
               value="overview"
               className="flex flex-col items-center py-2 data-[state=active]:bg-green-50 data-[state=active]:text-green-600 rounded-2xl mx-1 transition-all duration-300"
@@ -385,11 +471,32 @@ export default function DoctorDashboard({
               <span className="text-xs font-medium">Overview</span>
             </TabsTrigger>
             <TabsTrigger
+              value="predictions"
+              className="flex flex-col items-center py-2 data-[state=active]:bg-purple-50 data-[state=active]:text-purple-600 rounded-2xl mx-1 transition-all duration-300"
+            >
+              <Brain className="h-5 w-5 mb-1" />
+              <span className="text-xs font-medium">Predictions</span>
+            </TabsTrigger>
+            <TabsTrigger
               value="patients"
               className="flex flex-col items-center py-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-600 rounded-2xl mx-1 transition-all duration-300"
             >
               <Users className="h-5 w-5 mb-1" />
               <span className="text-xs font-medium">Patients</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="vitals"
+              className="flex flex-col items-center py-2 data-[state=active]:bg-orange-50 data-[state=active]:text-orange-600 rounded-2xl mx-1 transition-all duration-300 relative"
+            >
+              <Heart className="h-5 w-5 mb-1" />
+              <span className="text-xs font-medium">Vitals</span>
+              {vitalsAlerts.length > 0 && (
+                <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                  <span className="text-xs font-bold text-white">
+                    {vitalsAlerts.length}
+                  </span>
+                </div>
+              )}
             </TabsTrigger>
             <TabsTrigger
               value="urgent"
@@ -400,7 +507,7 @@ export default function DoctorDashboard({
             </TabsTrigger>
             <TabsTrigger
               value="reports"
-              className="flex flex-col items-center py-2 data-[state=active]:bg-purple-50 data-[state=active]:text-purple-600 rounded-2xl mx-1 transition-all duration-300"
+              className="flex flex-col items-center py-2 data-[state=active]:bg-orange-50 data-[state=active]:text-orange-600 rounded-2xl mx-1 transition-all duration-300"
             >
               <FileText className="h-5 w-5 mb-1" />
               <span className="text-xs font-medium">Reports</span>
@@ -421,20 +528,28 @@ export default function DoctorDashboard({
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">12</div>
-                  <div className="text-sm text-gray-600">Appointments</div>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {stats.totalPatients}
+                  </div>
+                  <div className="text-sm text-gray-600">Total Patients</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">8</div>
-                  <div className="text-sm text-gray-600">Completed</div>
+                  <div className="text-2xl font-bold text-green-600">
+                    {stats.aiDiagnoses}
+                  </div>
+                  <div className="text-sm text-gray-600">AI Diagnoses</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-orange-600">3</div>
-                  <div className="text-sm text-gray-600">Pending</div>
+                  <div className="text-2xl font-bold text-orange-600">
+                    {stats.totalSymptoms}
+                  </div>
+                  <div className="text-sm text-gray-600">Symptoms Logged</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-red-600">1</div>
-                  <div className="text-sm text-gray-600">Emergency</div>
+                  <div className="text-2xl font-bold text-red-600">
+                    {stats.urgentCases}
+                  </div>
+                  <div className="text-sm text-gray-600">Urgent Cases</div>
                 </div>
               </div>
             </CardContent>
@@ -800,6 +915,209 @@ export default function DoctorDashboard({
           </Card>
         </TabsContent>
 
+        {/* Disease Prediction Dashboard */}
+        <TabsContent
+          value="predictions"
+          className="p-6 space-y-6 animate-fade-in"
+        >
+          <Card className="border-0 bg-gradient-to-r from-purple-50 to-indigo-50 shadow-lg">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-xl flex items-center gap-3">
+                <Brain className="h-6 w-6 text-purple-600" />
+                AI Disease Prediction Dashboard
+              </CardTitle>
+              <p className="text-gray-600">
+                Predictive insights and risk assessments for your patients
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="text-center p-4 bg-white rounded-lg shadow">
+                  <div className="text-3xl font-bold text-purple-600">
+                    {
+                      patients.filter(
+                        (p) => p.aiDiagnosis?.diseasePredictions?.length > 0,
+                      ).length
+                    }
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    Patients with Predictions
+                  </div>
+                </div>
+                <div className="text-center p-4 bg-white rounded-lg shadow">
+                  <div className="text-3xl font-bold text-orange-600">
+                    {
+                      patients.filter((p) =>
+                        p.aiDiagnosis?.diseasePredictions?.some(
+                          (pred: any) => pred.riskScore >= 70,
+                        ),
+                      ).length
+                    }
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    High Risk Predictions
+                  </div>
+                </div>
+                <div className="text-center p-4 bg-white rounded-lg shadow">
+                  <div className="text-3xl font-bold text-red-600">
+                    {
+                      patients.filter((p) =>
+                        p.aiDiagnosis?.predictiveInsights?.some(
+                          (insight: string) =>
+                            insight.toLowerCase().includes("screening") ||
+                            insight.toLowerCase().includes("immediate"),
+                        ),
+                      ).length
+                    }
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    Urgent Interventions
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* High Risk Patients */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+                High-Risk Disease Predictions
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {patients
+                  .filter((p) =>
+                    p.aiDiagnosis?.diseasePredictions?.some(
+                      (pred: any) => pred.riskScore >= 50,
+                    ),
+                  )
+                  .slice(0, 5)
+                  .map((patient) => (
+                    <div
+                      key={patient.id}
+                      className="p-4 border rounded-lg bg-red-50 hover:bg-red-100 transition-colors"
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <h4 className="font-semibold text-gray-800">
+                            {patient.name}
+                          </h4>
+                          <p className="text-sm text-gray-600">
+                            Age: {patient.age} | Last Visit: {patient.lastVisit}
+                          </p>
+                        </div>
+                        <Badge className="bg-red-500 text-white">
+                          High Risk
+                        </Badge>
+                      </div>
+                      {patient.aiDiagnosis?.diseasePredictions
+                        ?.filter((pred: any) => pred.riskScore >= 50)
+                        .slice(0, 2)
+                        .map((prediction: any, index: number) => (
+                          <div
+                            key={index}
+                            className="mb-2 p-3 bg-white rounded border-l-4 border-red-500"
+                          >
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="font-medium text-red-800">
+                                {prediction.disease}
+                              </span>
+                              <span className="text-sm font-bold text-red-600">
+                                {prediction.riskScore}% Risk
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-700">
+                              Timeline: {prediction.timeline}
+                            </p>
+                            {prediction.preventionMeasures &&
+                              prediction.preventionMeasures.length > 0 && (
+                                <p className="text-xs text-gray-600 mt-1">
+                                  <strong>Prevention:</strong>{" "}
+                                  {prediction.preventionMeasures.join(", ")}
+                                </p>
+                              )}
+                          </div>
+                        ))}
+                    </div>
+                  ))}
+                {patients.filter((p) =>
+                  p.aiDiagnosis?.diseasePredictions?.some(
+                    (pred: any) => pred.riskScore >= 50,
+                  ),
+                ).length === 0 && (
+                  <div className="text-center py-8">
+                    <CheckCircle className="mx-auto h-12 w-12 text-green-500 mb-4" />
+                    <p className="text-gray-600">
+                      No high-risk disease predictions currently identified.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Preventive Care Recommendations */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5 text-blue-600" />
+                Preventive Care Recommendations
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {patients
+                  .filter((p) => p.aiDiagnosis?.predictiveInsights?.length > 0)
+                  .slice(0, 4)
+                  .map((patient) => (
+                    <div
+                      key={patient.id}
+                      className="p-4 border rounded-lg bg-blue-50"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-semibold text-gray-800">
+                          {patient.name}
+                        </h4>
+                        <Badge
+                          variant="outline"
+                          className="text-blue-600 border-blue-600"
+                        >
+                          Prevention Focus
+                        </Badge>
+                      </div>
+                      <div className="space-y-2">
+                        {patient.aiDiagnosis?.predictiveInsights
+                          ?.slice(0, 2)
+                          .map((insight: string, index: number) => (
+                            <div key={index} className="flex items-start gap-2">
+                              <Lightbulb className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                              <span className="text-sm text-blue-800">
+                                {insight}
+                              </span>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  ))}
+                {patients.filter(
+                  (p) => p.aiDiagnosis?.predictiveInsights?.length > 0,
+                ).length === 0 && (
+                  <div className="text-center py-8">
+                    <Brain className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                    <p className="text-gray-600">
+                      No predictive insights available. Patients need AI
+                      diagnosis analysis first.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Enhanced Patients Tab */}
         <TabsContent value="patients" className="p-6 space-y-6 animate-fade-in">
           {/* Search and Filter */}
@@ -893,6 +1211,169 @@ export default function DoctorDashboard({
           )}
         </TabsContent>
 
+        {/* Vitals Alerts Tab */}
+        <TabsContent value="vitals" className="p-6 space-y-6 animate-fade-in">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-800">
+                Vitals Monitoring
+              </h2>
+              <p className="text-gray-600">
+                Real-time patient vitals alerts and thresholds
+              </p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Badge variant="destructive" className="text-sm">
+                {
+                  vitalsAlerts.filter((alert) => alert.severity === "critical")
+                    .length
+                }{" "}
+                Critical
+              </Badge>
+              <Badge variant="secondary" className="text-sm">
+                {
+                  vitalsAlerts.filter((alert) => alert.severity === "warning")
+                    .length
+                }{" "}
+                Warning
+              </Badge>
+            </div>
+          </div>
+
+          {/* Critical Alerts */}
+          {vitalsAlerts.filter((alert) => alert.severity === "critical")
+            .length > 0 && (
+            <Card className="border-red-200 bg-red-50">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg text-red-800 flex items-center">
+                  <AlertTriangle className="h-5 w-5 mr-2 animate-pulse" />
+                  Critical Vitals Alerts
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {vitalsAlerts
+                  .filter((alert) => alert.severity === "critical")
+                  .map((alert, index) => (
+                    <div
+                      key={index}
+                      className="bg-white p-4 rounded-lg border border-red-200"
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h4 className="font-semibold text-gray-800">
+                            {alert.patientName}
+                          </h4>
+                          <p className="text-sm text-gray-600">{alert.vital}</p>
+                        </div>
+                        <Badge variant="destructive">Critical</Badge>
+                      </div>
+                      <div className="mb-2">
+                        <span className="text-sm font-medium">Value: </span>
+                        <span className="text-sm text-red-600 font-bold">
+                          {alert.value}
+                        </span>
+                        <span className="text-sm text-gray-500 ml-2">
+                          (Normal: {alert.threshold})
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-700 mb-3">
+                        {alert.message}
+                      </p>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-gray-500">
+                          {new Date(alert.timestamp).toLocaleString()}
+                        </span>
+                        <div className="space-x-2">
+                          <Button size="sm" variant="outline">
+                            <Phone className="h-4 w-4 mr-1" />
+                            Call
+                          </Button>
+                          <Button size="sm" variant="outline">
+                            Acknowledge
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Warning Alerts */}
+          {vitalsAlerts.filter((alert) => alert.severity === "warning").length >
+            0 && (
+            <Card className="border-orange-200 bg-orange-50">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg text-orange-800 flex items-center">
+                  <AlertTriangle className="h-5 w-5 mr-2" />
+                  Warning Vitals Alerts
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {vitalsAlerts
+                  .filter((alert) => alert.severity === "warning")
+                  .map((alert, index) => (
+                    <div
+                      key={index}
+                      className="bg-white p-4 rounded-lg border border-orange-200"
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h4 className="font-semibold text-gray-800">
+                            {alert.patientName}
+                          </h4>
+                          <p className="text-sm text-gray-600">{alert.vital}</p>
+                        </div>
+                        <Badge variant="default">Warning</Badge>
+                      </div>
+                      <div className="mb-2">
+                        <span className="text-sm font-medium">Value: </span>
+                        <span className="text-sm text-orange-600 font-bold">
+                          {alert.value}
+                        </span>
+                        <span className="text-sm text-gray-500 ml-2">
+                          (Normal: {alert.threshold})
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-700 mb-3">
+                        {alert.message}
+                      </p>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-gray-500">
+                          {new Date(alert.timestamp).toLocaleString()}
+                        </span>
+                        <div className="space-x-2">
+                          <Button size="sm" variant="outline">
+                            <MessageSquare className="h-4 w-4 mr-1" />
+                            Message
+                          </Button>
+                          <Button size="sm" variant="outline">
+                            Acknowledge
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* No Alerts */}
+          {vitalsAlerts.length === 0 && (
+            <Card className="border-green-200 bg-green-50">
+              <CardContent className="p-8 text-center">
+                <Heart className="h-12 w-12 text-green-600 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-green-800 mb-2">
+                  All Vitals Normal
+                </h3>
+                <p className="text-green-600">
+                  No critical or warning vitals alerts at this time.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
         {/* Enhanced Urgent Cases Tab */}
         <TabsContent value="urgent" className="p-6 space-y-6 animate-fade-in">
           <div className="flex items-center space-x-2 mb-6">
@@ -976,7 +1457,7 @@ export default function DoctorDashboard({
           </div>
 
           {selectedPatient ? (
-            <PatientHealthReport patient={selectedPatient} />
+            <PatientHealthReport patient={selectedPatient} doctor={user} />
           ) : (
             <Card className="border-0 bg-gradient-to-r from-purple-50 to-pink-50 shadow-lg">
               <CardContent className="p-12 text-center">

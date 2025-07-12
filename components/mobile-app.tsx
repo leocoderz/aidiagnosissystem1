@@ -31,6 +31,8 @@ import {
   RefreshCw,
   Calendar,
   MapPin,
+  Brain,
+  Search,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import SymptomInput from "@/components/symptom-input";
@@ -39,6 +41,18 @@ import TimelineTracker from "@/components/timeline-tracker";
 import WearableIntegration from "@/components/wearable-integration";
 import AISkinAssistant from "@/components/ai-skin-assistant";
 import TabletLookup from "@/components/tablet-lookup";
+import {
+  processVitals,
+  getPatientAlerts,
+  WearableVitals,
+  VitalAlert,
+} from "@/utils/vitals-monitoring";
+import { clearAllUsers, resetToRealDevicesOnly } from "@/utils/reset-system";
+import {
+  detectAllRealDevices,
+  RealWearableDevice,
+  getRealVitalsFromDevice,
+} from "@/utils/real-device-detection";
 
 interface MobileAppUser {
   id: string;
@@ -80,15 +94,358 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
     calories: 0,
     stressLevel: 0,
   });
+  const [hasRealData, setHasRealData] = useState(false);
   const [symptoms, setSymptoms] = useState<string[]>([]);
   const [diagnosis, setDiagnosis] = useState<any>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [batteryLevel, setBatteryLevel] = useState(0);
+  const [deviceName, setDeviceName] = useState("No Device");
+  const [lastSync, setLastSync] = useState("");
+  const [vitalsAlerts, setVitalsAlerts] = useState<any[]>([]);
+  const [realDevices, setRealDevices] = useState<RealWearableDevice[]>([]);
+  const [isDetectingDevices, setIsDetectingDevices] = useState(false);
   const [notifications, setNotifications] = useState(2);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [fitbitConnected, setFitbitConnected] = useState(false);
+  const [isConnectingFitbit, setIsConnectingFitbit] = useState(false);
   const { toast } = useToast();
 
-  // Note: Connect real wearable devices for live data
+  // Check for Fitbit OAuth callback parameters
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const fitbitConnected = urlParams.get("fitbit_connected");
+    const accessToken = urlParams.get("access_token");
+    const refreshToken = urlParams.get("refresh_token");
+    const userId = urlParams.get("user_id");
+    const expiresIn = urlParams.get("expires_in");
+    const fitbitError = urlParams.get("fitbit_error");
+
+    if (fitbitConnected === "true" && accessToken) {
+      // Store Fitbit tokens
+      localStorage.setItem("fitbit_access_token", accessToken);
+      localStorage.setItem("fitbit_refresh_token", refreshToken || "");
+      localStorage.setItem("fitbit_user_id", userId || "");
+      localStorage.setItem(
+        "fitbit_token_expiry",
+        (Date.now() + parseInt(expiresIn || "3600") * 1000).toString(),
+      );
+
+      setFitbitConnected(true);
+
+      toast({
+        title: "Fitbit Connected!",
+        description: "Successfully connected to your Fitbit account.",
+      });
+
+      // Clean up URL parameters
+      window.history.replaceState({}, document.title, window.location.pathname);
+
+      // Detect devices after connection
+      detectRealDevices();
+    } else if (fitbitError) {
+      toast({
+        title: "Fitbit Connection Failed",
+        description: `Error: ${fitbitError.replace("_", " ")}`,
+        variant: "destructive",
+      });
+
+      // Clean up URL parameters
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
+  // Check existing Fitbit connection on mount
+  useEffect(() => {
+    const accessToken = localStorage.getItem("fitbit_access_token");
+    const tokenExpiry = localStorage.getItem("fitbit_token_expiry");
+
+    if (accessToken && tokenExpiry) {
+      const isExpired = Date.now() > parseInt(tokenExpiry);
+      if (!isExpired) {
+        setFitbitConnected(true);
+      }
+    }
+  }, []);
+
+  // Clear existing users and detect real devices on initialization
+  useEffect(() => {
+    const initializeRealDevicesOnly = async () => {
+      // Clear all existing users and simulated data
+      resetToRealDevicesOnly();
+
+      toast({
+        title: "System Reset",
+        description: "All existing users cleared. Showing only real devices.",
+      });
+
+      // Detect real wearable devices
+      await detectRealDevices();
+    };
+
+    initializeRealDevicesOnly();
+  }, []);
+
+  // Real device detection
+  const detectRealDevices = async () => {
+    setIsDetectingDevices(true);
+
+    try {
+      const devices = await detectAllRealDevices();
+      setRealDevices(devices);
+
+      if (devices.length > 0) {
+        const connectedDevice =
+          devices.find((d) => d.isConnected) || devices[0];
+        setIsConnected(connectedDevice.isConnected);
+        setDeviceName(connectedDevice.name);
+        setBatteryLevel(connectedDevice.batteryLevel || 0);
+        setLastSync(connectedDevice.lastSync || "");
+
+        toast({
+          title: "Real Device Detected",
+          description: `Found ${connectedDevice.name}`,
+        });
+      } else {
+        setIsConnected(false);
+        setDeviceName("No Real Device Found");
+        setBatteryLevel(0);
+        setLastSync("");
+
+        toast({
+          title: "No Real Devices",
+          description:
+            "No wearable devices detected. Connect a real device to start monitoring.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error detecting devices:", error);
+      toast({
+        title: "Device Detection Failed",
+        description: "Unable to detect wearable devices. Check permissions.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDetectingDevices(false);
+    }
+  };
+
+  // Real-time vitals monitoring (only if real device connected)
+  useEffect(() => {
+    if (!isConnected || realDevices.length === 0) return;
+
+    const vitalsInterval = setInterval(async () => {
+      try {
+        const connectedDevice = realDevices.find((d) => d.isConnected);
+        if (!connectedDevice) return;
+
+        // Get real vitals data from the connected device
+        let realVitalsData;
+        try {
+          realVitalsData = await getRealVitalsFromDevice(connectedDevice);
+        } catch (vitalsError: any) {
+          console.error("Error getting vitals:", vitalsError);
+
+          // Handle specific error types
+          if (vitalsError.message?.includes("Bluetooth not available")) {
+            toast({
+              title: "Bluetooth Not Available",
+              description: "Use Fitbit Web API for device data instead.",
+              variant: "default",
+            });
+          } else if (vitalsError.message?.includes("Fitbit token expired")) {
+            setFitbitConnected(false);
+            localStorage.removeItem("fitbit_access_token");
+            toast({
+              title: "Fitbit Token Expired",
+              description: "Please reconnect your Fitbit account.",
+              variant: "destructive",
+            });
+          }
+          return; // Skip this iteration
+        }
+
+        // Only update if we actually received real data
+        if (
+          realVitalsData &&
+          (realVitalsData.heartRate > 0 || realVitalsData.steps > 0)
+        ) {
+          const newVitals: VitalSigns = {
+            heartRate: realVitalsData.heartRate || vitalSigns.heartRate,
+            bloodPressure:
+              realVitalsData.bloodPressure || vitalSigns.bloodPressure,
+            temperature: realVitalsData.temperature || vitalSigns.temperature,
+            oxygenSaturation:
+              realVitalsData.oxygenSaturation || vitalSigns.oxygenSaturation,
+            steps: realVitalsData.steps || vitalSigns.steps,
+            calories: realVitalsData.calories || vitalSigns.calories,
+            stressLevel: realVitalsData.stressLevel || vitalSigns.stressLevel,
+          };
+
+          setVitalSigns(newVitals);
+          setHasRealData(true);
+          setLastSync(new Date().toISOString());
+
+          // Send real vitals to monitoring API
+          sendVitalsToMonitoring(newVitals);
+
+          toast({
+            title: "Real Vitals Updated",
+            description: `Live data from ${connectedDevice.name} (${connectedDevice.connectionType})`,
+          });
+        } else {
+          // No real data available
+          setHasRealData(false);
+          toast({
+            title: "No Real Data",
+            description: `${connectedDevice.name} connected but no vitals data available`,
+            variant: "default",
+          });
+        }
+      } catch (error) {
+        console.error("Error getting real vitals:", error);
+
+        // If we can't get real data, show zeros
+        const emptyVitals: VitalSigns = {
+          heartRate: 0,
+          bloodPressure: "--/--",
+          temperature: 0,
+          oxygenSaturation: 0,
+          steps: 0,
+          calories: 0,
+          stressLevel: 0,
+        };
+
+        setVitalSigns(emptyVitals);
+
+        toast({
+          title: "Unable to Read Device",
+          description: "Could not get real vitals data from device",
+          variant: "destructive",
+        });
+      }
+    }, 60000); // Update every 60 seconds for real devices
+
+    return () => clearInterval(vitalsInterval);
+  }, [isConnected, user.id]);
+
+  // Check for vitals alerts
+  useEffect(() => {
+    const alertsInterval = setInterval(() => {
+      try {
+        const alerts = getPatientAlerts(user.id);
+        setVitalsAlerts(alerts);
+      } catch (error) {
+        console.error("Failed to fetch alerts:", error);
+      }
+    }, 15000); // Check alerts every 15 seconds
+
+    return () => clearInterval(alertsInterval);
+  }, [user.id]);
+
+  const sendVitalsToMonitoring = (vitals: VitalSigns) => {
+    try {
+      const [systolic, diastolic] = vitals.bloodPressure.split("/").map(Number);
+
+      const wearableVitals: WearableVitals = {
+        patientId: user.id,
+        deviceId: "apple_watch_001",
+        timestamp: new Date().toISOString(),
+        heartRate: vitals.heartRate,
+        bloodPressure: {
+          systolic: systolic || 120,
+          diastolic: diastolic || 80,
+        },
+        temperature: vitals.temperature,
+        oxygenSaturation: vitals.oxygenSaturation,
+        stressLevel: vitals.stressLevel,
+        steps: vitals.steps,
+        calories: vitals.calories,
+        batteryLevel: batteryLevel,
+      };
+
+      const alerts = processVitals(wearableVitals, user.name);
+
+      if (alerts.length > 0) {
+        // Show alert notifications for critical vitals
+        alerts.forEach((alert: VitalAlert) => {
+          if (alert.severity === "critical") {
+            toast({
+              title: "🚨 Critical Vitals Alert",
+              description: alert.message,
+              variant: "destructive",
+            });
+          } else if (alert.severity === "warning") {
+            toast({
+              title: "⚠️ Vitals Warning",
+              description: alert.message,
+            });
+          }
+        });
+      }
+    } catch (error) {
+      console.error("Failed to process vitals:", error);
+    }
+  };
+
+  const connectFitbit = async () => {
+    setIsConnectingFitbit(true);
+
+    try {
+      const response = await fetch(`/api/fitbit/authorize?userId=${user.id}`);
+      const data = await response.json();
+
+      if (data.authUrl) {
+        // Redirect to Fitbit authorization
+        window.location.href = data.authUrl;
+      } else {
+        throw new Error("Failed to get authorization URL");
+      }
+    } catch (error) {
+      console.error("Error connecting to Fitbit:", error);
+      toast({
+        title: "Fitbit Connection Failed",
+        description: "Unable to connect to Fitbit. Please try again.",
+        variant: "destructive",
+      });
+      setIsConnectingFitbit(false);
+    }
+  };
+
+  const disconnectFitbit = () => {
+    localStorage.removeItem("fitbit_access_token");
+    localStorage.removeItem("fitbit_refresh_token");
+    localStorage.removeItem("fitbit_user_id");
+    localStorage.removeItem("fitbit_token_expiry");
+    setFitbitConnected(false);
+
+    // Remove Fitbit devices from the list
+    setRealDevices((prev) => prev.filter((device) => device.type !== "fitbit"));
+
+    toast({
+      title: "Fitbit Disconnected",
+      description: "Your Fitbit account has been disconnected.",
+    });
+  };
+
+  const toggleDeviceConnection = async () => {
+    if (!isConnected) {
+      // Try to detect and connect to real devices
+      await detectRealDevices();
+    } else {
+      // Disconnect from current device
+      setIsConnected(false);
+      setDeviceName("No Device");
+      setBatteryLevel(0);
+      setLastSync("");
+      setRealDevices([]);
+
+      toast({
+        title: "Device Disconnected",
+        description: "Disconnected from wearable device",
+      });
+    }
+  };
 
   const handleSymptomSubmit = (symptomData: any) => {
     setSymptoms((prev) => [...prev, symptomData.symptom]);
@@ -255,27 +612,57 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
             </div>
           </div>
 
-          {/* Device Status Banner */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+          {/* Real Device Status Banner */}
+          <div
+            className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20 cursor-pointer hover:bg-white/20 transition-all duration-300"
+            onClick={toggleDeviceConnection}
+          >
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <div
-                  className={`w-3 h-3 rounded-full ${isConnected ? "bg-green-400 animate-pulse" : "bg-red-400"}`}
+                  className={`w-3 h-3 rounded-full ${
+                    isDetectingDevices
+                      ? "bg-yellow-400 animate-ping"
+                      : isConnected
+                        ? "bg-green-400 animate-pulse"
+                        : "bg-red-400"
+                  }`}
                 ></div>
                 <div>
                   <p className="text-sm font-medium">
-                    {isConnected
-                      ? "Health Device Connected"
-                      : "No Device Connected"}
+                    {isDetectingDevices
+                      ? "Detecting Devices..."
+                      : isConnected
+                        ? `${deviceName} Connected`
+                        : "No Real Device Found"}
                   </p>
                   <p className="text-xs text-white/70">
-                    {isConnected
-                      ? `Battery: ${batteryLevel}%`
-                      : "Pair a device for real-time monitoring"}
+                    {isDetectingDevices
+                      ? "Scanning Bluetooth & Wi-Fi..."
+                      : isConnected && lastSync
+                        ? `${realDevices.find((d) => d.isConnected)?.connectionType?.toUpperCase() || "UNKNOWN"} • ${hasRealData ? "Real Data ✓" : "No Data ✗"} • ${new Date(lastSync).toLocaleTimeString()}`
+                        : "Tap to scan for real wearable devices (BT/Wi-Fi)"}
                   </p>
                 </div>
               </div>
-              <ChevronRight className="h-5 w-5 text-white/60" />
+              <div className="flex items-center space-x-2">
+                {realDevices.length > 0 && (
+                  <Badge
+                    variant="secondary"
+                    className="bg-white/20 text-white text-xs"
+                  >
+                    {realDevices.length} Found
+                  </Badge>
+                )}
+                {vitalsAlerts.length > 0 && (
+                  <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+                    <span className="text-xs font-bold text-white">
+                      {vitalsAlerts.length}
+                    </span>
+                  </div>
+                )}
+                <ChevronRight className="h-5 w-5 text-white/60" />
+              </div>
             </div>
           </div>
         </div>
@@ -335,6 +722,87 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
           value="dashboard"
           className="p-6 space-y-6 animate-fade-in"
         >
+          {/* Real Device Data Status Notice */}
+          <Card
+            className={`border-2 ${hasRealData ? "border-green-200 bg-green-50" : "border-orange-200 bg-orange-50"}`}
+          >
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-3">
+                {hasRealData ? (
+                  <Shield className="h-6 w-6 text-green-600" />
+                ) : (
+                  <AlertTriangle className="h-6 w-6 text-orange-600" />
+                )}
+                <div>
+                  <h3
+                    className={`font-semibold ${hasRealData ? "text-green-800" : "text-orange-800"}`}
+                  >
+                    {hasRealData
+                      ? "Real Device Data Active"
+                      : "Real Device Mode - No Data"}
+                  </h3>
+                  <p
+                    className={`text-sm ${hasRealData ? "text-green-600" : "text-orange-600"}`}
+                  >
+                    {hasRealData
+                      ? `Live vitals from ${realDevices.find((d) => d.isConnected)?.name} via ${realDevices.find((d) => d.isConnected)?.connectionType?.toUpperCase()}`
+                      : "Connect a real wearable device (Bluetooth/Wi-Fi) to see live vitals data."}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          {/* Vitals Alerts */}
+          {vitalsAlerts.length > 0 && (
+            <Card className="border-0 bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-xl">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-2">
+                    <AlertTriangle className="h-6 w-6 animate-pulse" />
+                    <h3 className="text-lg font-bold">Vitals Alert</h3>
+                  </div>
+                  <Badge variant="secondary" className="bg-white/20 text-white">
+                    {vitalsAlerts.length} Active
+                  </Badge>
+                </div>
+                <div className="space-y-2">
+                  {vitalsAlerts.slice(0, 2).map((alert: any, index: number) => (
+                    <div key={index} className="bg-white/10 rounded-lg p-3">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-medium text-sm">{alert.vital}</p>
+                          <p className="text-xs text-white/80">
+                            {alert.message}
+                          </p>
+                        </div>
+                        <Badge
+                          variant={
+                            alert.severity === "critical"
+                              ? "destructive"
+                              : "default"
+                          }
+                          className="text-xs"
+                        >
+                          {alert.severity}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                  {vitalsAlerts.length > 2 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full text-white hover:bg-white/10"
+                      onClick={() => setActiveTab("devices")}
+                    >
+                      View {vitalsAlerts.length - 2} more alerts
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Emergency Button */}
           <Card className="border-0 bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-xl">
             <CardContent className="p-6">
@@ -379,13 +847,66 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
             </CardContent>
           </Card>
 
+          {/* AI Diagnosis Results */}
+          {diagnosis && (
+            <Card className="border-0 bg-gradient-to-r from-purple-50 to-indigo-50 shadow-lg">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-800">
+                      Latest AI Diagnosis
+                    </h3>
+                    <p className="text-sm text-gray-600">AI-powered analysis</p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-purple-600">
+                      {diagnosis.confidence}%
+                    </div>
+                    <div className="text-sm text-purple-600">Confidence</div>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <Badge
+                      variant={
+                        diagnosis.severity === "severe"
+                          ? "destructive"
+                          : diagnosis.severity === "moderate"
+                            ? "default"
+                            : "secondary"
+                      }
+                      className="mb-2"
+                    >
+                      {diagnosis.condition}
+                    </Badge>
+                    <p className="text-sm text-gray-700 line-clamp-2">
+                      {diagnosis.explanation}
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => setActiveTab("symptoms")}
+                  >
+                    <Brain className="h-4 w-4 mr-2" />
+                    View Full Analysis
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Quick Actions */}
           <div>
             <h3 className="text-lg font-bold text-gray-800 mb-4">
               Quick Actions
             </h3>
             <div className="grid grid-cols-2 gap-4">
-              <Card className="border-0 bg-gradient-to-br from-blue-50 to-cyan-50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+              <Card
+                className="border-0 bg-gradient-to-br from-blue-50 to-cyan-50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer"
+                onClick={() => setActiveTab("symptoms")}
+              >
                 <CardContent className="p-6 text-center">
                   <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center mx-auto mb-3">
                     <Plus className="h-8 w-8 text-white" />
@@ -397,15 +918,20 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
                 </CardContent>
               </Card>
 
-              <Card className="border-0 bg-gradient-to-br from-purple-50 to-pink-50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+              <Card
+                className="border-0 bg-gradient-to-br from-purple-50 to-pink-50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer"
+                onClick={() => setActiveTab("ai")}
+              >
                 <CardContent className="p-6 text-center">
                   <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                    <Calendar className="h-8 w-8 text-white" />
+                    <Sparkles className="h-8 w-8 text-white" />
                   </div>
                   <h4 className="font-semibold text-gray-800 mb-1">
-                    Book Appointment
+                    AI Skin Analysis
                   </h4>
-                  <p className="text-xs text-gray-600">Schedule with doctor</p>
+                  <p className="text-xs text-gray-600">
+                    Visual health assessment
+                  </p>
                 </CardContent>
               </Card>
             </div>
@@ -422,11 +948,21 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
                   <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
                     <Heart className="h-6 w-6 text-red-500" />
                   </div>
-                  <div className="text-2xl font-bold text-gray-800">
-                    {vitalSigns.heartRate || "--"}
+                  <div
+                    className={`text-2xl font-bold ${!hasRealData ? "text-gray-400" : vitalSigns.heartRate > 100 || vitalSigns.heartRate < 60 ? "text-red-600" : "text-gray-800"}`}
+                  >
+                    {hasRealData ? vitalSigns.heartRate : "--"}
                   </div>
                   <div className="text-sm text-gray-600">Heart Rate</div>
-                  <div className="text-xs text-gray-500 mt-1">BPM</div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {hasRealData ? "BPM (Real)" : "BPM (No Data)"}
+                  </div>
+                  {isConnected && hasRealData && (
+                    <div className="w-2 h-2 bg-green-400 rounded-full mx-auto mt-2 animate-pulse"></div>
+                  )}
+                  {isConnected && !hasRealData && (
+                    <div className="w-2 h-2 bg-orange-400 rounded-full mx-auto mt-2"></div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -435,11 +971,21 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
                   <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
                     <Droplets className="h-6 w-6 text-blue-500" />
                   </div>
-                  <div className="text-2xl font-bold text-gray-800">
-                    {vitalSigns.oxygenSaturation || "--"}%
+                  <div
+                    className={`text-2xl font-bold ${!hasRealData ? "text-gray-400" : vitalSigns.oxygenSaturation < 95 ? "text-red-600" : "text-gray-800"}`}
+                  >
+                    {hasRealData ? `${vitalSigns.oxygenSaturation}%` : "--%"}
                   </div>
                   <div className="text-sm text-gray-600">Oxygen</div>
-                  <div className="text-xs text-gray-500 mt-1">SpO2</div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {hasRealData ? "SpO2 (Real)" : "SpO2 (No Data)"}
+                  </div>
+                  {isConnected && hasRealData && (
+                    <div className="w-2 h-2 bg-green-400 rounded-full mx-auto mt-2 animate-pulse"></div>
+                  )}
+                  {isConnected && !hasRealData && (
+                    <div className="w-2 h-2 bg-orange-400 rounded-full mx-auto mt-2"></div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -448,11 +994,16 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
                   <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-3">
                     <Thermometer className="h-6 w-6 text-orange-500" />
                   </div>
-                  <div className="text-2xl font-bold text-gray-800">
+                  <div
+                    className={`text-2xl font-bold ${vitalSigns.temperature > 99.5 || vitalSigns.temperature < 97.0 ? "text-red-600" : "text-gray-800"}`}
+                  >
                     {vitalSigns.temperature || "--"}°F
                   </div>
                   <div className="text-sm text-gray-600">Temperature</div>
                   <div className="text-xs text-gray-500 mt-1">Body Temp</div>
+                  {isConnected && (
+                    <div className="w-2 h-2 bg-green-400 rounded-full mx-auto mt-2 animate-pulse"></div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -462,10 +1013,13 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
                     <TrendingUp className="h-6 w-6 text-green-500" />
                   </div>
                   <div className="text-2xl font-bold text-gray-800">
-                    {vitalSigns.steps || "--"}
+                    {vitalSigns.steps.toLocaleString() || "--"}
                   </div>
                   <div className="text-sm text-gray-600">Steps</div>
                   <div className="text-xs text-gray-500 mt-1">Today</div>
+                  {isConnected && (
+                    <div className="w-2 h-2 bg-green-400 rounded-full mx-auto mt-2 animate-pulse"></div>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -524,7 +1078,7 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
         </TabsContent>
 
         {/* Enhanced Symptoms Tab */}
-        <TabsContent value="symptoms" className="p-6 animate-fade-in">
+        <TabsContent value="symptoms" className="p-6 animate-fade-in space-y-6">
           <SymptomInput
             onDiagnosisRequest={handleDiagnosisRequest}
             currentSymptoms={symptoms.map((s, index) => ({
@@ -537,6 +1091,16 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
               timestamp: new Date().toISOString(),
             }))}
           />
+
+          {/* Show diagnosis results if available */}
+          {diagnosis && (
+            <div className="mt-6">
+              <h3 className="text-lg font-bold text-gray-800 mb-4">
+                AI Analysis Results
+              </h3>
+              <DiagnosisResults diagnosis={diagnosis} />
+            </div>
+          )}
         </TabsContent>
 
         {/* Enhanced Tablets Tab */}
@@ -546,17 +1110,279 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
 
         {/* Enhanced Timeline Tab */}
         <TabsContent value="timeline" className="p-6 animate-fade-in">
-          <TimelineTracker symptoms={symptoms} />
+          <TimelineTracker
+            symptoms={symptoms}
+            diagnosisHistory={diagnosis ? [diagnosis] : []}
+          />
         </TabsContent>
 
-        {/* Enhanced Devices Tab */}
-        <TabsContent value="devices" className="p-6 animate-fade-in">
-          <WearableIntegration />
+        {/* Real Devices Tab */}
+        <TabsContent value="devices" className="p-6 animate-fade-in space-y-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-800">
+                Real Wearable Devices
+              </h2>
+              <p className="text-gray-600">
+                Connect and manage your wearable devices
+              </p>
+            </div>
+            <Button
+              onClick={detectRealDevices}
+              disabled={isDetectingDevices}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {isDetectingDevices ? (
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Bluetooth className="h-4 w-4 mr-2" />
+              )}
+              {isDetectingDevices ? "Detecting..." : "Scan Devices"}
+            </Button>
+          </div>
+
+          {/* Fitbit Connection Card */}
+          <Card
+            className={`border-2 ${fitbitConnected ? "border-green-200 bg-green-50" : "border-blue-200 bg-blue-50"}`}
+          >
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div
+                    className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                      fitbitConnected ? "bg-green-100" : "bg-blue-100"
+                    }`}
+                  >
+                    <Heart
+                      className={`h-6 w-6 ${
+                        fitbitConnected ? "text-green-600" : "text-blue-600"
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <h3
+                      className={`font-semibold ${
+                        fitbitConnected ? "text-green-800" : "text-blue-800"
+                      }`}
+                    >
+                      Fitbit Integration
+                    </h3>
+                    <p
+                      className={`text-sm ${
+                        fitbitConnected ? "text-green-600" : "text-blue-600"
+                      }`}
+                    >
+                      {fitbitConnected
+                        ? "Connected and syncing data"
+                        : "Connect your Fitbit account for real device data"}
+                    </p>
+                  </div>
+                </div>
+                <div>
+                  {fitbitConnected ? (
+                    <Button
+                      onClick={disconnectFitbit}
+                      variant="outline"
+                      size="sm"
+                      className="border-red-200 text-red-700 hover:bg-red-50"
+                    >
+                      Disconnect
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={connectFitbit}
+                      disabled={isConnectingFitbit}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      {isConnectingFitbit ? (
+                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Heart className="h-4 w-4 mr-2" />
+                      )}
+                      {isConnectingFitbit ? "Connecting..." : "Connect Fitbit"}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* No Real Devices Found */}
+          {realDevices.length === 0 &&
+            !isDetectingDevices &&
+            !fitbitConnected && (
+              <Card className="border-dashed border-2 border-gray-300">
+                <CardContent className="p-8 text-center">
+                  <Bluetooth className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                    No Real Devices Found
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    Connect a real wearable device (Apple Watch, Fitbit, Garmin,
+                    etc.) to start monitoring your health data.
+                  </p>
+                  <div className="space-y-2 text-sm text-gray-500 mb-4">
+                    <p>• Connect via Fitbit Web API (recommended)</p>
+                    <p>• Enable Bluetooth on your device</p>
+                    <p>• Ensure your wearable is in pairing mode</p>
+                    <p>• Grant necessary permissions</p>
+                  </div>
+                  <div className="flex gap-2 justify-center">
+                    <Button
+                      onClick={connectFitbit}
+                      className="bg-blue-600 hover:bg-blue-700"
+                      disabled={isConnectingFitbit}
+                    >
+                      <Heart className="h-4 w-4 mr-2" />
+                      Connect Fitbit
+                    </Button>
+                    <Button onClick={detectRealDevices} variant="outline">
+                      <Search className="h-4 w-4 mr-2" />
+                      Scan Bluetooth
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+          {/* Real Devices List */}
+          {realDevices.length > 0 && (
+            <div className="space-y-4">
+              {realDevices.map((device, index) => (
+                <Card
+                  key={index}
+                  className={`${device.isConnected ? "border-green-200 bg-green-50" : "border-gray-200"}`}
+                >
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div
+                          className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                            device.isConnected ? "bg-green-100" : "bg-gray-100"
+                          }`}
+                        >
+                          {device.type === "apple_watch" && (
+                            <Activity className="h-6 w-6 text-gray-600" />
+                          )}
+                          {device.type === "fitbit" && (
+                            <Heart className="h-6 w-6 text-gray-600" />
+                          )}
+                          {device.type === "garmin" && (
+                            <TrendingUp className="h-6 w-6 text-gray-600" />
+                          )}
+                          {device.type === "samsung_watch" && (
+                            <Activity className="h-6 w-6 text-gray-600" />
+                          )}
+                          {device.type === "unknown" && (
+                            <Bluetooth className="h-6 w-6 text-gray-600" />
+                          )}
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-gray-800">
+                            {device.name}
+                          </h3>
+                          <p className="text-sm text-gray-600">
+                            {device.type.replace("_", " ").toUpperCase()}
+                          </p>
+                          <div className="flex items-center space-x-2 mt-1">
+                            <div
+                              className={`w-2 h-2 rounded-full ${
+                                device.isConnected
+                                  ? "bg-green-400"
+                                  : "bg-red-400"
+                              }`}
+                            ></div>
+                            <span className="text-xs text-gray-500">
+                              {device.isConnected
+                                ? "Connected"
+                                : "Disconnected"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        {device.isConnected && device.batteryLevel && (
+                          <div className="flex items-center space-x-1 mb-2">
+                            <Battery className="h-4 w-4 text-gray-600" />
+                            <span className="text-sm text-gray-600">
+                              {device.batteryLevel}%
+                            </span>
+                          </div>
+                        )}
+                        <Badge
+                          variant={device.isConnected ? "default" : "secondary"}
+                        >
+                          {device.isConnected ? "Active" : "Inactive"}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    {/* Device Capabilities */}
+                    {device.capabilities.length > 0 && (
+                      <div className="mt-4">
+                        <p className="text-xs text-gray-500 mb-2">
+                          Capabilities:
+                        </p>
+                        <div className="flex flex-wrap gap-1">
+                          {device.capabilities.map((capability, capIndex) => (
+                            <Badge
+                              key={capIndex}
+                              variant="outline"
+                              className="text-xs"
+                            >
+                              {capability.replace("_", " ")}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Last Sync Info */}
+                    {device.lastSync && (
+                      <div className="mt-4 text-xs text-gray-500">
+                        Last sync: {new Date(device.lastSync).toLocaleString()}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {/* Device Integration Instructions */}
+          <Card className="bg-blue-50 border-blue-200">
+            <CardContent className="p-6">
+              <h3 className="text-lg font-semibold text-blue-800 mb-3">
+                Device Integration Guide
+              </h3>
+              <div className="space-y-2 text-sm text-blue-700">
+                <p>
+                  <strong>Apple Watch:</strong> Enable HealthKit permissions in
+                  Settings &gt; Privacy &amp; Security &gt; Health
+                </p>
+                <p>
+                  <strong>Fitbit:</strong> Use Fitbit Web API with OAuth
+                  authentication
+                </p>
+                <p>
+                  <strong>Garmin:</strong> Connect via Garmin Connect IQ SDK
+                </p>
+                <p>
+                  <strong>Samsung Watch:</strong> Use Samsung Health SDK
+                  integration
+                </p>
+                <p>
+                  <strong>Other Devices:</strong> Bluetooth Low Energy (BLE)
+                  connection required
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Enhanced AI Assistant Tab */}
         <TabsContent value="ai" className="p-6 animate-fade-in">
-          <AISkinAssistant />
+          <AISkinAssistant userId={user.id} />
         </TabsContent>
       </Tabs>
     </div>

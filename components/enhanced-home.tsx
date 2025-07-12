@@ -19,7 +19,7 @@ import {
   Award,
   X,
 } from "lucide-react";
-import LoginScreen from "@/components/login-screen";
+import LoginScreen from "@/components/login-screen-fixed";
 import MobileApp from "@/components/mobile-app";
 import DoctorDashboard from "@/components/doctor-dashboard";
 import { useToast } from "@/hooks/use-toast";
