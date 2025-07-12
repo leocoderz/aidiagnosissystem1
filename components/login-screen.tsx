@@ -475,7 +475,11 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
             <TabsContent value="doctor" className="mt-6">
               <div className="text-center">
                 <CardTitle className="text-2xl flex items-center justify-center gap-2 mb-2">
-                  {authMode === "signin" ? "Welcome Back" : "Join Our Team"}
+                  {authMode === "forgot"
+                    ? "Password Reset"
+                    : authMode === "signin"
+                      ? "Welcome Back"
+                      : "Join Our Team"}
                   <Badge
                     variant="outline"
                     className="border-cyan-200 text-cyan-700 bg-cyan-50 rounded-full"
@@ -484,9 +488,11 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                   </Badge>
                 </CardTitle>
                 <p className="text-sm text-gray-600">
-                  {authMode === "signin"
-                    ? "Sign in to your doctor account"
-                    : "Join our medical professionals"}
+                  {authMode === "forgot"
+                    ? "Reset your doctor account password"
+                    : authMode === "signin"
+                      ? "Sign in to your doctor account"
+                      : "Join our medical professionals"}
                 </p>
               </div>
             </TabsContent>
