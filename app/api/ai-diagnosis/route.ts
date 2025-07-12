@@ -546,7 +546,7 @@ function getEmergencyDiseasePredictions(
   gender: string,
 ) {
   const predictions = [];
-  const insights = [];
+  const insights: string[] = [];
   const riskFactors: string[] = [];
 
   if (symptomText.includes("chest pain")) {
@@ -586,7 +586,7 @@ function getRespiratoryDiseasePredictions(
   gender: string,
 ) {
   const predictions = [];
-  const insights = [];
+  const insights: string[] = [];
   const riskFactors: string[] = [];
 
   // Chronic conditions prediction
@@ -627,7 +627,7 @@ function getGastrointestinalPredictions(
   gender: string,
 ) {
   const predictions = [];
-  const insights = [];
+  const insights: string[] = [];
   const riskFactors: string[] = [];
 
   if (symptomText.includes("recurring") || age > 50) {
@@ -663,7 +663,7 @@ function getNeurologicalPredictions(
   gender: string,
 ) {
   const predictions = [];
-  const insights = [];
+  const insights: string[] = [];
   const riskFactors: string[] = [];
 
   if (symptomText.includes("headache") && symptomText.includes("frequent")) {
@@ -700,7 +700,7 @@ function getGeneralDiseasePredictions(
   gender: string,
 ) {
   const predictions = [];
-  const insights = [];
+  const insights: string[] = [];
   const riskFactors: string[] = [];
 
   // Age-based risk assessments
