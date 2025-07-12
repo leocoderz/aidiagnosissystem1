@@ -1207,6 +1207,169 @@ export default function DoctorDashboard({
           )}
         </TabsContent>
 
+        {/* Vitals Alerts Tab */}
+        <TabsContent value="vitals" className="p-6 space-y-6 animate-fade-in">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-800">
+                Vitals Monitoring
+              </h2>
+              <p className="text-gray-600">
+                Real-time patient vitals alerts and thresholds
+              </p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Badge variant="destructive" className="text-sm">
+                {
+                  vitalsAlerts.filter((alert) => alert.severity === "critical")
+                    .length
+                }{" "}
+                Critical
+              </Badge>
+              <Badge variant="secondary" className="text-sm">
+                {
+                  vitalsAlerts.filter((alert) => alert.severity === "warning")
+                    .length
+                }{" "}
+                Warning
+              </Badge>
+            </div>
+          </div>
+
+          {/* Critical Alerts */}
+          {vitalsAlerts.filter((alert) => alert.severity === "critical")
+            .length > 0 && (
+            <Card className="border-red-200 bg-red-50">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg text-red-800 flex items-center">
+                  <AlertTriangle className="h-5 w-5 mr-2 animate-pulse" />
+                  Critical Vitals Alerts
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {vitalsAlerts
+                  .filter((alert) => alert.severity === "critical")
+                  .map((alert, index) => (
+                    <div
+                      key={index}
+                      className="bg-white p-4 rounded-lg border border-red-200"
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h4 className="font-semibold text-gray-800">
+                            {alert.patientName}
+                          </h4>
+                          <p className="text-sm text-gray-600">{alert.vital}</p>
+                        </div>
+                        <Badge variant="destructive">Critical</Badge>
+                      </div>
+                      <div className="mb-2">
+                        <span className="text-sm font-medium">Value: </span>
+                        <span className="text-sm text-red-600 font-bold">
+                          {alert.value}
+                        </span>
+                        <span className="text-sm text-gray-500 ml-2">
+                          (Normal: {alert.threshold})
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-700 mb-3">
+                        {alert.message}
+                      </p>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-gray-500">
+                          {new Date(alert.timestamp).toLocaleString()}
+                        </span>
+                        <div className="space-x-2">
+                          <Button size="sm" variant="outline">
+                            <Phone className="h-4 w-4 mr-1" />
+                            Call
+                          </Button>
+                          <Button size="sm" variant="outline">
+                            Acknowledge
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Warning Alerts */}
+          {vitalsAlerts.filter((alert) => alert.severity === "warning").length >
+            0 && (
+            <Card className="border-orange-200 bg-orange-50">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg text-orange-800 flex items-center">
+                  <AlertTriangle className="h-5 w-5 mr-2" />
+                  Warning Vitals Alerts
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {vitalsAlerts
+                  .filter((alert) => alert.severity === "warning")
+                  .map((alert, index) => (
+                    <div
+                      key={index}
+                      className="bg-white p-4 rounded-lg border border-orange-200"
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h4 className="font-semibold text-gray-800">
+                            {alert.patientName}
+                          </h4>
+                          <p className="text-sm text-gray-600">{alert.vital}</p>
+                        </div>
+                        <Badge variant="default">Warning</Badge>
+                      </div>
+                      <div className="mb-2">
+                        <span className="text-sm font-medium">Value: </span>
+                        <span className="text-sm text-orange-600 font-bold">
+                          {alert.value}
+                        </span>
+                        <span className="text-sm text-gray-500 ml-2">
+                          (Normal: {alert.threshold})
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-700 mb-3">
+                        {alert.message}
+                      </p>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-gray-500">
+                          {new Date(alert.timestamp).toLocaleString()}
+                        </span>
+                        <div className="space-x-2">
+                          <Button size="sm" variant="outline">
+                            <MessageSquare className="h-4 w-4 mr-1" />
+                            Message
+                          </Button>
+                          <Button size="sm" variant="outline">
+                            Acknowledge
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* No Alerts */}
+          {vitalsAlerts.length === 0 && (
+            <Card className="border-green-200 bg-green-50">
+              <CardContent className="p-8 text-center">
+                <Heart className="h-12 w-12 text-green-600 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-green-800 mb-2">
+                  All Vitals Normal
+                </h3>
+                <p className="text-green-600">
+                  No critical or warning vitals alerts at this time.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
         {/* Enhanced Urgent Cases Tab */}
         <TabsContent value="urgent" className="p-6 space-y-6 animate-fade-in">
           <div className="flex items-center space-x-2 mb-6">
