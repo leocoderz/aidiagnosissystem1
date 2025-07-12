@@ -680,11 +680,16 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
                   <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
                     <Droplets className="h-6 w-6 text-blue-500" />
                   </div>
-                  <div className="text-2xl font-bold text-gray-800">
+                  <div
+                    className={`text-2xl font-bold ${vitalSigns.oxygenSaturation < 95 ? "text-red-600" : "text-gray-800"}`}
+                  >
                     {vitalSigns.oxygenSaturation || "--"}%
                   </div>
                   <div className="text-sm text-gray-600">Oxygen</div>
                   <div className="text-xs text-gray-500 mt-1">SpO2</div>
+                  {isConnected && (
+                    <div className="w-2 h-2 bg-green-400 rounded-full mx-auto mt-2 animate-pulse"></div>
+                  )}
                 </CardContent>
               </Card>
 
