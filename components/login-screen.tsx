@@ -282,13 +282,13 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
           JSON.stringify(existingPatients),
         );
       } else {
-        user.specialization = formData.specialization;
-        user.licenseNumber = formData.licenseNumber;
-        user.hospital = formData.hospital;
+        userWithPassword.specialization = formData.specialization;
+        userWithPassword.licenseNumber = formData.licenseNumber;
+        userWithPassword.hospital = formData.hospital;
       }
 
       // Save user to storage
-      saveUser(user);
+      saveUser(userWithPassword);
 
       // Send welcome email for new signups
       try {
