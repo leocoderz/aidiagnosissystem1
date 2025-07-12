@@ -418,9 +418,13 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
       {/* Simplified Header for Modal */}
       <div className="text-center mb-6">
         <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-2">
-          Welcome Back
+          {authMode === "forgot" ? "Reset Password" : "Welcome Back"}
         </h1>
-        <p className="text-gray-600">Sign in to your SympCare24 account</p>
+        <p className="text-gray-600">
+          {authMode === "forgot"
+            ? "Enter your email to receive a password reset link"
+            : "Sign in to your SympCare24 account"}
+        </p>
       </div>
 
       <Card className="shadow-2xl border-0 bg-white/90 backdrop-blur-sm">
