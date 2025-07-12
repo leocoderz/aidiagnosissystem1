@@ -604,14 +604,25 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
           <Card className="border-blue-200 bg-blue-50">
             <CardContent className="p-4">
               <div className="flex items-center space-x-3">
-                <Shield className="h-6 w-6 text-blue-600" />
+                {hasRealData ? (
+                  <Shield className="h-6 w-6 text-green-600" />
+                ) : (
+                  <AlertTriangle className="h-6 w-6 text-orange-600" />
+                )}
                 <div>
-                  <h3 className="font-semibold text-blue-800">
-                    Real Device Mode Active
+                  <h3
+                    className={`font-semibold ${hasRealData ? "text-green-800" : "text-orange-800"}`}
+                  >
+                    {hasRealData
+                      ? "Real Device Data Active"
+                      : "Real Device Mode - No Data"}
                   </h3>
-                  <p className="text-sm text-blue-600">
-                    System cleared of simulated data. Only real wearable devices
-                    will be shown.
+                  <p
+                    className={`text-sm ${hasRealData ? "text-green-600" : "text-orange-600"}`}
+                  >
+                    {hasRealData
+                      ? `Live vitals from ${realDevices.find((d) => d.isConnected)?.name} via ${realDevices.find((d) => d.isConnected)?.connectionType?.toUpperCase()}`
+                      : "Connect a real wearable device (Bluetooth/Wi-Fi) to see live vitals data."}
                   </p>
                 </div>
               </div>
