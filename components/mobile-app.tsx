@@ -40,6 +40,12 @@ import TimelineTracker from "@/components/timeline-tracker";
 import WearableIntegration from "@/components/wearable-integration";
 import AISkinAssistant from "@/components/ai-skin-assistant";
 import TabletLookup from "@/components/tablet-lookup";
+import {
+  processVitals,
+  getPatientAlerts,
+  WearableVitals,
+  VitalAlert,
+} from "@/utils/vitals-monitoring";
 
 interface MobileAppUser {
   id: string;
