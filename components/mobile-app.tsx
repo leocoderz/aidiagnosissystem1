@@ -379,6 +379,56 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
             </CardContent>
           </Card>
 
+          {/* AI Diagnosis Results */}
+          {diagnosis && (
+            <Card className="border-0 bg-gradient-to-r from-purple-50 to-indigo-50 shadow-lg">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-800">
+                      Latest AI Diagnosis
+                    </h3>
+                    <p className="text-sm text-gray-600">AI-powered analysis</p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-purple-600">
+                      {diagnosis.confidence}%
+                    </div>
+                    <div className="text-sm text-purple-600">Confidence</div>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <Badge
+                      variant={
+                        diagnosis.severity === "severe"
+                          ? "destructive"
+                          : diagnosis.severity === "moderate"
+                            ? "default"
+                            : "secondary"
+                      }
+                      className="mb-2"
+                    >
+                      {diagnosis.condition}
+                    </Badge>
+                    <p className="text-sm text-gray-700 line-clamp-2">
+                      {diagnosis.explanation}
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => setActiveTab("symptoms")}
+                  >
+                    <Brain className="h-4 w-4 mr-2" />
+                    View Full Analysis
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Quick Actions */}
           <div>
             <h3 className="text-lg font-bold text-gray-800 mb-4">
