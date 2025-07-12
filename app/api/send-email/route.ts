@@ -182,7 +182,9 @@ export async function POST(request: NextRequest) {
       console.log("Response:", emailResult.response);
     } catch (emailError) {
       console.error("Gmail sending error:", emailError);
-      throw new Error(`Failed to send email: ${emailError.message}`);
+      throw new Error(
+        `Failed to send email: ${emailError instanceof Error ? emailError.message : "Unknown error"}`,
+      );
     }
 
     return NextResponse.json({
