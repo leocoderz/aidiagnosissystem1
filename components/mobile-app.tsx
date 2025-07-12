@@ -698,11 +698,16 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
                   <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-3">
                     <Thermometer className="h-6 w-6 text-orange-500" />
                   </div>
-                  <div className="text-2xl font-bold text-gray-800">
+                  <div
+                    className={`text-2xl font-bold ${vitalSigns.temperature > 99.5 || vitalSigns.temperature < 97.0 ? "text-red-600" : "text-gray-800"}`}
+                  >
                     {vitalSigns.temperature || "--"}°F
                   </div>
                   <div className="text-sm text-gray-600">Temperature</div>
                   <div className="text-xs text-gray-500 mt-1">Body Temp</div>
+                  {isConnected && (
+                    <div className="w-2 h-2 bg-green-400 rounded-full mx-auto mt-2 animate-pulse"></div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -712,10 +717,13 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
                     <TrendingUp className="h-6 w-6 text-green-500" />
                   </div>
                   <div className="text-2xl font-bold text-gray-800">
-                    {vitalSigns.steps || "--"}
+                    {vitalSigns.steps.toLocaleString() || "--"}
                   </div>
                   <div className="text-sm text-gray-600">Steps</div>
                   <div className="text-xs text-gray-500 mt-1">Today</div>
+                  {isConnected && (
+                    <div className="w-2 h-2 bg-green-400 rounded-full mx-auto mt-2 animate-pulse"></div>
+                  )}
                 </CardContent>
               </Card>
             </div>
