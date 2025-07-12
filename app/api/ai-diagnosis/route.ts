@@ -540,6 +540,210 @@ function generateAdvancedRuleBasedDiagnosis(
   return createGeneralAssessment(symptomText, age, gender);
 }
 
+function getEmergencyDiseasePredictions(
+  symptomText: string,
+  age: number,
+  gender: string,
+) {
+  const predictions = [];
+  const insights = [];
+  const riskFactors = [];
+
+  if (symptomText.includes("chest pain")) {
+    predictions.push({
+      disease: "Coronary Artery Disease",
+      riskScore: age > 50 ? 75 : 45,
+      timeline: "6-12 months",
+      preventionMeasures: [
+        "Cardiac lifestyle modifications",
+        "Regular monitoring",
+      ],
+      earlyWarningSignsForDisease: [
+        "Exertional chest pain",
+        "Shortness of breath",
+      ],
+    });
+    riskFactors.push("Age over 50", "Chest pain symptoms");
+    insights.push("Immediate cardiac evaluation recommended");
+  }
+
+  if (symptomText.includes("breathing") || symptomText.includes("dyspnea")) {
+    predictions.push({
+      disease: "Chronic Respiratory Disease",
+      riskScore: 60,
+      timeline: "3-6 months",
+      preventionMeasures: ["Smoking cessation", "Pulmonary rehabilitation"],
+      earlyWarningSignsForDisease: ["Progressive dyspnea", "Chronic cough"],
+    });
+  }
+
+  return { predictions, insights, riskFactors };
+}
+
+function getRespiratoryDiseasePredictions(
+  symptomText: string,
+  age: number,
+  gender: string,
+) {
+  const predictions = [];
+  const insights = [];
+  const riskFactors = [];
+
+  // Chronic conditions prediction
+  if (symptomText.includes("cough") && symptomText.includes("recurring")) {
+    predictions.push({
+      disease: "Chronic Bronchitis",
+      riskScore: age > 40 ? 65 : 35,
+      timeline: "6-12 months",
+      preventionMeasures: ["Smoking cessation", "Air quality improvement"],
+      earlyWarningSignsForDisease: [
+        "Persistent morning cough",
+        "Increased sputum production",
+      ],
+    });
+    riskFactors.push("Recurrent respiratory infections", "Age factor");
+  }
+
+  if (age > 60) {
+    predictions.push({
+      disease: "Pneumonia Risk",
+      riskScore: 40,
+      timeline: "Next 12 months",
+      preventionMeasures: ["Pneumococcal vaccination", "Annual flu vaccine"],
+      earlyWarningSignsForDisease: [
+        "New onset fever with cough",
+        "Shortness of breath",
+      ],
+    });
+    insights.push("Consider preventive vaccination");
+  }
+
+  return { predictions, insights, riskFactors };
+}
+
+function getGastrointestinalPredictions(
+  symptomText: string,
+  age: number,
+  gender: string,
+) {
+  const predictions = [];
+  const insights = [];
+  const riskFactors = [];
+
+  if (symptomText.includes("recurring") || age > 50) {
+    predictions.push({
+      disease: "Inflammatory Bowel Disease",
+      riskScore: 25,
+      timeline: "6-18 months",
+      preventionMeasures: ["Dietary modifications", "Stress management"],
+      earlyWarningSignsForDisease: ["Chronic abdominal pain", "Blood in stool"],
+    });
+  }
+
+  if (age > 50) {
+    predictions.push({
+      disease: "Colorectal Cancer Screening Need",
+      riskScore: 15,
+      timeline: "Immediate screening recommended",
+      preventionMeasures: ["Regular screening colonoscopy", "Healthy diet"],
+      earlyWarningSignsForDisease: [
+        "Changes in bowel habits",
+        "Unexplained weight loss",
+      ],
+    });
+    insights.push("Age-appropriate cancer screening indicated");
+  }
+
+  return { predictions, insights, riskFactors };
+}
+
+function getNeurologicalPredictions(
+  symptomText: string,
+  age: number,
+  gender: string,
+) {
+  const predictions = [];
+  const insights = [];
+  const riskFactors = [];
+
+  if (symptomText.includes("headache") && symptomText.includes("frequent")) {
+    predictions.push({
+      disease: "Chronic Migraine Disorder",
+      riskScore: gender === "female" ? 55 : 35,
+      timeline: "3-6 months",
+      preventionMeasures: ["Trigger identification", "Lifestyle modifications"],
+      earlyWarningSignsForDisease: [
+        "Increasing headache frequency",
+        "Medication overuse",
+      ],
+    });
+    riskFactors.push("Frequent headache pattern", "Gender factor");
+  }
+
+  if (age > 65) {
+    predictions.push({
+      disease: "Cognitive Decline Risk",
+      riskScore: 20,
+      timeline: "5-10 years",
+      preventionMeasures: ["Cognitive exercises", "Social engagement"],
+      earlyWarningSignsForDisease: ["Memory difficulties", "Confusion"],
+    });
+    insights.push("Cognitive health monitoring recommended");
+  }
+
+  return { predictions, insights, riskFactors };
+}
+
+function getGeneralDiseasePredictions(
+  symptomText: string,
+  age: number,
+  gender: string,
+) {
+  const predictions = [];
+  const insights = [];
+  const riskFactors = [];
+
+  // Age-based risk assessments
+  if (age > 65) {
+    predictions.push({
+      disease: "Cardiovascular Disease Risk",
+      riskScore: 35,
+      timeline: "2-5 years",
+      preventionMeasures: [
+        "Regular cardiac screening",
+        "Blood pressure monitoring",
+      ],
+      earlyWarningSignsForDisease: ["Chest discomfort", "Shortness of breath"],
+    });
+    insights.push("Age-related cardiovascular screening recommended");
+    riskFactors.push("Advanced age");
+  }
+
+  if (age > 50) {
+    predictions.push({
+      disease: "Type 2 Diabetes Risk",
+      riskScore: 25,
+      timeline: "3-7 years",
+      preventionMeasures: ["Weight management", "Regular exercise"],
+      earlyWarningSignsForDisease: ["Increased thirst", "Frequent urination"],
+    });
+  }
+
+  // General health predictions
+  predictions.push({
+    disease: "General Health Decline",
+    riskScore: 15,
+    timeline: "Variable",
+    preventionMeasures: ["Healthy lifestyle", "Preventive care"],
+    earlyWarningSignsForDisease: ["Fatigue", "Decreased energy"],
+  });
+
+  insights.push("Regular health monitoring and preventive care important");
+  riskFactors.push("General health symptoms");
+
+  return { predictions, insights, riskFactors };
+}
+
 function createEmergencyDiagnosis(
   condition: string,
   symptomText: string,
@@ -556,7 +760,7 @@ function createEmergencyDiagnosis(
     condition: condition,
     confidence: 90,
     severity: "critical",
-    icdCode: "R06.02", // Example ICD code
+    icdCode: "R06.02",
     explanation: `Based on the symptom presentation, this appears to be a serious medical condition requiring immediate evaluation. The combination of symptoms suggests potential ${condition.toLowerCase()} which requires urgent medical intervention.`,
     diseasePredictions: emergencyPredictions.predictions,
     predictiveInsights: emergencyPredictions.insights,
@@ -628,6 +832,11 @@ function createRespiratoryDiagnosis(
   const hasFever = symptomText.includes("fever");
   const hasCough = symptomText.includes("cough");
   const severity = hasFever && hasCough ? "moderate" : "mild";
+  const respiratoryPredictions = getRespiratoryDiseasePredictions(
+    symptomText,
+    age,
+    gender,
+  );
 
   return {
     condition: "Upper Respiratory Tract Infection",
@@ -636,6 +845,9 @@ function createRespiratoryDiagnosis(
     icdCode: "J06.9",
     explanation:
       "Clinical presentation consistent with viral or bacterial upper respiratory infection affecting the nose, throat, and upper airways. Common condition with characteristic symptom pattern.",
+    diseasePredictions: respiratoryPredictions.predictions,
+    predictiveInsights: respiratoryPredictions.insights,
+    riskFactors: respiratoryPredictions.riskFactors,
     recommendations: [
       "Supportive care with symptom monitoring and rest",
       "Maintain adequate hydration (8-10 glasses water daily)",
@@ -693,6 +905,7 @@ function createRespiratoryDiagnosis(
     aiGenerated: false,
     timestamp: new Date().toISOString(),
     analysisQuality: "enhanced",
+    predictionGenerated: true,
   };
 }
 
@@ -701,6 +914,12 @@ function createGastrointestinalDiagnosis(
   age: number,
   gender: string,
 ) {
+  const giPredictions = getGastrointestinalPredictions(
+    symptomText,
+    age,
+    gender,
+  );
+
   return {
     condition: "Acute Gastroenteritis",
     confidence: 82,
@@ -708,6 +927,9 @@ function createGastrointestinalDiagnosis(
     icdCode: "K59.1",
     explanation:
       "Symptoms consistent with acute gastroenteritis, likely viral in origin. Common self-limiting condition affecting the gastrointestinal tract.",
+    diseasePredictions: giPredictions.predictions,
+    predictiveInsights: giPredictions.insights,
+    riskFactors: giPredictions.riskFactors,
     recommendations: [
       "Maintain hydration with clear fluids and electrolyte replacement",
       "BRAT diet (Bananas, Rice, Applesauce, Toast) as tolerated",
@@ -764,6 +986,7 @@ function createGastrointestinalDiagnosis(
     aiGenerated: false,
     timestamp: new Date().toISOString(),
     analysisQuality: "enhanced",
+    predictionGenerated: true,
   };
 }
 
@@ -772,6 +995,8 @@ function createNeurologicalDiagnosis(
   age: number,
   gender: string,
 ) {
+  const neuroPredictions = getNeurologicalPredictions(symptomText, age, gender);
+
   return {
     condition: "Tension-Type Headache",
     confidence: 78,
@@ -779,6 +1004,9 @@ function createNeurologicalDiagnosis(
     icdCode: "G44.2",
     explanation:
       "Symptoms consistent with tension-type headache, the most common primary headache disorder. Often related to stress, fatigue, or muscle tension.",
+    diseasePredictions: neuroPredictions.predictions,
+    predictiveInsights: neuroPredictions.insights,
+    riskFactors: neuroPredictions.riskFactors,
     recommendations: [
       "Stress management and relaxation techniques",
       "Regular sleep schedule and adequate rest",
@@ -836,6 +1064,7 @@ function createNeurologicalDiagnosis(
     aiGenerated: false,
     timestamp: new Date().toISOString(),
     analysisQuality: "enhanced",
+    predictionGenerated: true,
   };
 }
 
@@ -844,6 +1073,12 @@ function createGeneralAssessment(
   age: number,
   gender: string,
 ) {
+  const generalPredictions = getGeneralDiseasePredictions(
+    symptomText,
+    age,
+    gender,
+  );
+
   return {
     condition: "General Health Assessment",
     confidence: 75,
@@ -851,6 +1086,9 @@ function createGeneralAssessment(
     icdCode: "Z00.00",
     explanation:
       "Based on the symptom presentation, this appears to be a general health concern requiring monitoring and potentially medical evaluation for proper diagnosis and management.",
+    diseasePredictions: generalPredictions.predictions,
+    predictiveInsights: generalPredictions.insights,
+    riskFactors: generalPredictions.riskFactors,
     recommendations: [
       "Comprehensive symptom tracking and monitoring",
       "Maintain optimal hydration and nutrition",
@@ -908,5 +1146,6 @@ function createGeneralAssessment(
     aiGenerated: false,
     timestamp: new Date().toISOString(),
     analysisQuality: "enhanced",
+    predictionGenerated: true,
   };
 }
