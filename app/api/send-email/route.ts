@@ -21,15 +21,23 @@ export async function POST(request: NextRequest) {
     }
 
     // Email content based on user type and purpose
-    const subject = isWelcome
-      ? `Welcome to SympCare24 - Your AI Health Companion!`
-      : `SympCare24 Login Notification`;
+    const subject = isPasswordReset
+      ? `SympCare24 - Password Reset Request`
+      : isPasswordChanged
+        ? `SympCare24 - Password Successfully Changed`
+        : isWelcome
+          ? `Welcome to SympCare24 - Your AI Health Companion!`
+          : `SympCare24 Login Notification`;
 
-    const emailMessage = isWelcome
-      ? type === "patient"
-        ? `Welcome to SympCare24! Your patient account has been successfully created. You can now access our AI-powered health platform with features like symptom analysis, health monitoring, and professional consultations.`
-        : `Welcome to SympCare24! Your doctor account has been successfully created. You now have access to our comprehensive patient management system and AI diagnostic tools.`
-      : `Hello ${name}, you have successfully signed in to your SympCare24 account.`;
+    const emailMessage = isPasswordReset
+      ? `You have requested to reset your password for your SympCare24 account. Click the link below to reset your password.`
+      : isPasswordChanged
+        ? `Your SympCare24 account password has been successfully changed.`
+        : isWelcome
+          ? type === "patient"
+            ? `Welcome to SympCare24! Your patient account has been successfully created. You can now access our AI-powered health platform with features like symptom analysis, health monitoring, and professional consultations.`
+            : `Welcome to SympCare24! Your doctor account has been successfully created. You now have access to our comprehensive patient management system and AI diagnostic tools.`
+          : `Hello ${name}, you have successfully signed in to your SympCare24 account.`;
 
     // Enhanced email template
     const htmlContent = `
