@@ -93,8 +93,8 @@ export async function POST(request: NextRequest) {
       used: false,
     });
 
-    // Create reset link (in production, use your actual domain)
-    const resetLink = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/reset-password?token=${resetToken}`;
+    // Create reset link (using current domain or fallback)
+    const resetLink = `${process.env.NEXT_PUBLIC_APP_URL || "https://sympcare24.app"}/reset-password?token=${resetToken}`;
 
     // Send password reset email
     try {
