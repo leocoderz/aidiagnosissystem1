@@ -98,8 +98,9 @@ export async function POST(request: NextRequest) {
 
     // Send password reset email
     try {
+      // Use the current request URL to build the email API URL
       const emailResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/send-email`,
+        new URL("/api/send-email", request.url),
         {
           method: "POST",
           headers: {
