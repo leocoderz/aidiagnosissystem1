@@ -117,9 +117,12 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Email sending error:", error);
+    const { isWelcome: errorIsWelcome = true } = await request
+      .json()
+      .catch(() => ({}));
     return NextResponse.json(
       {
-        error: isWelcome
+        error: errorIsWelcome
           ? "Failed to send welcome email"
           : "Failed to send login notification",
       },
