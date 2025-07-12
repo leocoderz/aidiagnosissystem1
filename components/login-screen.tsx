@@ -87,6 +87,18 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
   };
 
   const validateForm = () => {
+    if (authMode === "forgot") {
+      if (!formData.email) {
+        throw new Error("Email address is required");
+      }
+      // Email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        throw new Error("Please enter a valid email address");
+      }
+      return;
+    }
+
     if (!formData.email || !formData.password) {
       throw new Error("Email and password are required");
     }
