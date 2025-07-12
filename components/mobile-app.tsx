@@ -86,14 +86,15 @@ interface VitalSigns {
 export default function MobileApp({ user, onLogout }: MobileAppProps) {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [vitalSigns, setVitalSigns] = useState<VitalSigns>({
-    heartRate: 72,
-    bloodPressure: "120/80",
-    temperature: 98.6,
-    oxygenSaturation: 98,
-    steps: 8432,
-    calories: 2156,
-    stressLevel: 35,
+    heartRate: 0,
+    bloodPressure: "--/--",
+    temperature: 0,
+    oxygenSaturation: 0,
+    steps: 0,
+    calories: 0,
+    stressLevel: 0,
   });
+  const [hasRealData, setHasRealData] = useState(false);
   const [symptoms, setSymptoms] = useState<string[]>([]);
   const [diagnosis, setDiagnosis] = useState<any>(null);
   const [isConnected, setIsConnected] = useState(false);
