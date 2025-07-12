@@ -67,41 +67,55 @@ CONDUCT A COMPREHENSIVE MEDICAL ASSESSMENT:
    - ICD-10 code if applicable
    - Supporting clinical evidence
 
-2. **SEVERITY STRATIFICATION**
+2. **DISEASE PREDICTION & RISK ASSESSMENT**
+   - Potential future conditions based on current symptoms and risk factors
+   - Early warning indicators for developing diseases
+   - Risk probability scores (0-100%) for each predicted condition
+   - Timeline predictions for disease progression
+   - Preventive intervention opportunities
+
+3. **SEVERITY STRATIFICATION**
    - Classification: Mild/Moderate/Severe/Critical
    - Clinical severity indicators
    - Risk stratification factors
    - Urgency of medical attention needed
 
-3. **DIFFERENTIAL DIAGNOSIS**
+4. **DIFFERENTIAL DIAGNOSIS**
    - Top 4-5 alternative diagnoses ranked by probability
    - Key distinguishing features for each
    - Additional tests/symptoms needed to differentiate
 
-4. **PATHOPHYSIOLOGY**
+5. **PATHOPHYSIOLOGY**
    - Underlying disease mechanism
    - Organ system involvement
    - Disease progression pathway
 
-5. **EVIDENCE-BASED TREATMENT PLAN**
+6. **PREDICTIVE INSIGHTS FOR PHYSICIANS**
+   - Risk factors contributing to disease prediction
+   - Early intervention recommendations
+   - Monitoring parameters for disease prevention
+   - Patient education priorities
+   - Screening recommendations
+
+7. **EVIDENCE-BASED TREATMENT PLAN**
    - First-line therapeutic interventions
    - Specific medications with dosing (when appropriate)
    - Non-pharmacological interventions
    - Timeline for expected improvement
    - Follow-up recommendations
 
-6. **RED FLAG SYMPTOMS**
+8. **RED FLAG SYMPTOMS**
    - Warning signs requiring immediate medical attention
    - Emergency department criteria
    - When to call 911
 
-7. **MONITORING AND PROGNOSIS**
+9. **MONITORING AND PROGNOSIS**
    - Expected clinical course
    - Recovery timeline
    - Long-term outlook
    - Potential complications
 
-8. **PREVENTION STRATEGIES**
+10. **PREVENTION STRATEGIES**
    - Risk factor modification
    - Lifestyle interventions
    - Screening recommendations
