@@ -531,10 +531,10 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
                 }}
                 variant="outline"
                 className="w-full"
-              >
+                            >
                 Back to Login
               </Button>
-                        </div>
+            </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* Name field - only for signup */}
