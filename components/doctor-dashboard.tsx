@@ -158,7 +158,35 @@ export default function DoctorDashboard({
       }
     };
 
+    const loadVitalsAlerts = () => {
+      try {
+        const alerts = JSON.parse(
+          localStorage.getItem("medical_vitals_alerts") || "[]",
+        );
+        const activeAlerts = alerts.filter(
+          (alert: VitalAlert) => alert.status === "active",
+        );
+        setVitalsAlerts(activeAlerts);
+
+        // Update notifications count to include vitals alerts
+        const criticalAlerts = activeAlerts.filter(
+          (alert: VitalAlert) => alert.severity === "critical",
+        ).length;
+        setNotifications(5 + criticalAlerts);
+      } catch (error) {
+        console.error("Failed to load vitals alerts:", error);
+      }
+    };
+
     loadPatientData();
+    loadVitalsAlerts();
+
+    // Check for new vitals alerts every 30 seconds
+    const alertsInterval = setInterval(() => {
+      loadVitalsAlerts();
+    }, 30000);
+
+    return () => clearInterval(alertsInterval);
   }, []);
 
   const filteredPatients = patients.filter(
