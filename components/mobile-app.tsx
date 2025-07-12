@@ -126,17 +126,10 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
 
   // Check for vitals alerts
   useEffect(() => {
-    const alertsInterval = setInterval(async () => {
+    const alertsInterval = setInterval(() => {
       try {
-        const response = await fetch(
-          "/api/wearable-monitoring?alertsOnly=true",
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setVitalsAlerts(
-            data.alerts.filter((alert: any) => alert.patientId === user.id),
-          );
-        }
+        const alerts = getPatientAlerts(user.id);
+        setVitalsAlerts(alerts);
       } catch (error) {
         console.error("Failed to fetch alerts:", error);
       }
@@ -145,57 +138,48 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
     return () => clearInterval(alertsInterval);
   }, [user.id]);
 
-  const sendVitalsToMonitoring = async (vitals: VitalSigns) => {
+  const sendVitalsToMonitoring = (vitals: VitalSigns) => {
     try {
       const [systolic, diastolic] = vitals.bloodPressure.split("/").map(Number);
 
-      const response = await fetch("/api/wearable-monitoring", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const wearableVitals: WearableVitals = {
+        patientId: user.id,
+        deviceId: "apple_watch_001",
+        timestamp: new Date().toISOString(),
+        heartRate: vitals.heartRate,
+        bloodPressure: {
+          systolic: systolic || 120,
+          diastolic: diastolic || 80,
         },
-        body: JSON.stringify({
-          vitals: {
-            patientId: user.id,
-            deviceId: "apple_watch_001",
-            timestamp: new Date().toISOString(),
-            heartRate: vitals.heartRate,
-            bloodPressure: {
-              systolic: systolic || 120,
-              diastolic: diastolic || 80,
-            },
-            temperature: vitals.temperature,
-            oxygenSaturation: vitals.oxygenSaturation,
-            stressLevel: vitals.stressLevel,
-            steps: vitals.steps,
-            calories: vitals.calories,
-            batteryLevel: batteryLevel,
-          },
-        }),
-      });
+        temperature: vitals.temperature,
+        oxygenSaturation: vitals.oxygenSaturation,
+        stressLevel: vitals.stressLevel,
+        steps: vitals.steps,
+        calories: vitals.calories,
+        batteryLevel: batteryLevel,
+      };
 
-      if (response.ok) {
-        const result = await response.json();
-        if (result.alerts && result.alerts.length > 0) {
-          // Show alert notifications for critical vitals
-          result.alerts.forEach((alert: any) => {
-            if (alert.severity === "critical") {
-              toast({
-                title: "🚨 Critical Vitals Alert",
-                description: alert.message,
-                variant: "destructive",
-              });
-            } else if (alert.severity === "warning") {
-              toast({
-                title: "⚠️ Vitals Warning",
-                description: alert.message,
-              });
-            }
-          });
-        }
+      const alerts = processVitals(wearableVitals, user.name);
+
+      if (alerts.length > 0) {
+        // Show alert notifications for critical vitals
+        alerts.forEach((alert: VitalAlert) => {
+          if (alert.severity === "critical") {
+            toast({
+              title: "🚨 Critical Vitals Alert",
+              description: alert.message,
+              variant: "destructive",
+            });
+          } else if (alert.severity === "warning") {
+            toast({
+              title: "⚠️ Vitals Warning",
+              description: alert.message,
+            });
+          }
+        });
       }
     } catch (error) {
-      console.error("Failed to send vitals:", error);
+      console.error("Failed to process vitals:", error);
     }
   };
 
