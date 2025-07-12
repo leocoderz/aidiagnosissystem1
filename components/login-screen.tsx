@@ -251,7 +251,7 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
           localStorage.getItem("mediai_all_patients") || "[]",
         );
         const patientData = {
-          ...user,
+          ...userWithPassword,
           registrationDate: new Date().toISOString(),
           healthScore: 85,
           status: "stable",
