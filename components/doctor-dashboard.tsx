@@ -458,7 +458,7 @@ export default function DoctorDashboard({
       {/* Enhanced Navigation */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="bg-white border-b border-gray-100 sticky top-0 z-40 backdrop-blur-sm bg-white/90">
-          <TabsList className="grid w-full grid-cols-5 h-16 bg-transparent rounded-none border-0">
+          <TabsList className="grid w-full grid-cols-6 h-16 bg-transparent rounded-none border-0">
             <TabsTrigger
               value="overview"
               className="flex flex-col items-center py-2 data-[state=active]:bg-green-50 data-[state=active]:text-green-600 rounded-2xl mx-1 transition-all duration-300"
