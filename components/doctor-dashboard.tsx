@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -106,6 +106,47 @@ export default function DoctorDashboard({
     severity: "Low" as "Low" | "Medium" | "High" | "Critical",
   });
   const { toast } = useToast();
+
+  // Load real patient data from localStorage
+  useEffect(() => {
+    const loadPatientData = () => {
+      try {
+        const storedPatients = localStorage.getItem("mediai_all_patients");
+        if (storedPatients) {
+          const allPatients = JSON.parse(storedPatients);
+
+          // Convert stored patient data to dashboard format
+          const dashboardPatients: Patient[] = allPatients.map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            age: p.age || 30,
+            gender: p.gender || "other",
+            lastVisit: p.lastVisit || new Date().toLocaleDateString(),
+            condition: p.condition || "General Checkup",
+            severity: (p.severity || "Low") as
+              | "Low"
+              | "Medium"
+              | "High"
+              | "Critical",
+            vitals: p.vitals || {
+              heartRate: 72,
+              bloodPressure: "120/80",
+              temperature: 98.6,
+              oxygenSaturation: 98,
+            },
+            symptoms: p.symptoms || [],
+            aiDiagnosis: p.aiDiagnosis,
+          }));
+
+          setPatients(dashboardPatients);
+        }
+      } catch (error) {
+        console.error("Error loading patient data:", error);
+      }
+    };
+
+    loadPatientData();
+  }, []);
 
   const filteredPatients = patients.filter(
     (patient) =>
