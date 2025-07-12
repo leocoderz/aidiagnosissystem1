@@ -462,20 +462,28 @@ export default function DoctorDashboard({
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">12</div>
-                  <div className="text-sm text-gray-600">Appointments</div>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {stats.totalPatients}
+                  </div>
+                  <div className="text-sm text-gray-600">Total Patients</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">8</div>
-                  <div className="text-sm text-gray-600">Completed</div>
+                  <div className="text-2xl font-bold text-green-600">
+                    {stats.aiDiagnoses}
+                  </div>
+                  <div className="text-sm text-gray-600">AI Diagnoses</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-orange-600">3</div>
-                  <div className="text-sm text-gray-600">Pending</div>
+                  <div className="text-2xl font-bold text-orange-600">
+                    {stats.totalSymptoms}
+                  </div>
+                  <div className="text-sm text-gray-600">Symptoms Logged</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-red-600">1</div>
-                  <div className="text-sm text-gray-600">Emergency</div>
+                  <div className="text-2xl font-bold text-red-600">
+                    {stats.urgentCases}
+                  </div>
+                  <div className="text-sm text-gray-600">Urgent Cases</div>
                 </div>
               </div>
             </CardContent>
