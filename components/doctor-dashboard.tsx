@@ -54,6 +54,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { VitalAlert } from "@/utils/vitals-monitoring";
 import PatientHealthReport from "@/components/patient-health-report";
 // import type { User as UserType } from "@/types/user";
 
