@@ -410,10 +410,42 @@ export default function WearableIntegration({
             {!bluetoothSupported && (
               <Alert>
                 <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
-                  {!window.isSecureContext
-                    ? "Bluetooth requires HTTPS connection. Please access this page via HTTPS or localhost."
-                    : "Bluetooth is not supported in your current browser. Try using Chrome, Edge, or Opera with HTTPS."}
+                <AlertDescription className="space-y-2">
+                  <p>
+                    {!window.isSecureContext
+                      ? "Bluetooth requires HTTPS connection. Please access this page via HTTPS or localhost."
+                      : "Bluetooth is not supported in your current browser. Try using Chrome, Edge, or Opera with HTTPS."}
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setDemoMode(true);
+                      setBluetoothDevices([
+                        {
+                          id: "demo-hr-monitor",
+                          name: "Polar HR Monitor (Demo)",
+                          deviceClass: 0,
+                          connected: false,
+                          paired: true,
+                        },
+                        {
+                          id: "demo-fitbit",
+                          name: "Fitbit Versa (Demo)",
+                          deviceClass: 0,
+                          connected: false,
+                          paired: true,
+                        },
+                      ]);
+                      toast({
+                        title: "Demo Mode Enabled",
+                        description:
+                          "Using simulated devices for demonstration",
+                      });
+                    }}
+                  >
+                    Try Demo Mode
+                  </Button>
                 </AlertDescription>
               </Alert>
             )}
