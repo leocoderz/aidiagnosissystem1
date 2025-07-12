@@ -472,7 +472,7 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
             </div>
           </div>
 
-          {/* Device Status Banner */}
+          {/* Real Device Status Banner */}
           <div
             className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20 cursor-pointer hover:bg-white/20 transition-all duration-300"
             onClick={toggleDeviceConnection}
@@ -480,22 +480,40 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <div
-                  className={`w-3 h-3 rounded-full ${isConnected ? "bg-green-400 animate-pulse" : "bg-red-400"}`}
+                  className={`w-3 h-3 rounded-full ${
+                    isDetectingDevices
+                      ? "bg-yellow-400 animate-ping"
+                      : isConnected
+                        ? "bg-green-400 animate-pulse"
+                        : "bg-red-400"
+                  }`}
                 ></div>
                 <div>
                   <p className="text-sm font-medium">
-                    {isConnected
-                      ? `${deviceName} Connected`
-                      : "No Device Connected"}
+                    {isDetectingDevices
+                      ? "Detecting Devices..."
+                      : isConnected
+                        ? `${deviceName} Connected`
+                        : "No Real Device Found"}
                   </p>
                   <p className="text-xs text-white/70">
-                    {isConnected
-                      ? `Battery: ${batteryLevel}% • Last sync: ${new Date(lastSync).toLocaleTimeString()}`
-                      : "Tap to pair a device for real-time monitoring"}
+                    {isDetectingDevices
+                      ? "Scanning for wearable devices..."
+                      : isConnected && lastSync
+                        ? `Battery: ${batteryLevel}% • Last sync: ${new Date(lastSync).toLocaleTimeString()}`
+                        : "Tap to scan for real wearable devices"}
                   </p>
                 </div>
               </div>
               <div className="flex items-center space-x-2">
+                {realDevices.length > 0 && (
+                  <Badge
+                    variant="secondary"
+                    className="bg-white/20 text-white text-xs"
+                  >
+                    {realDevices.length} Found
+                  </Badge>
+                )}
                 {vitalsAlerts.length > 0 && (
                   <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
                     <span className="text-xs font-bold text-white">
