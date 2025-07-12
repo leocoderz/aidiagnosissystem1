@@ -582,6 +582,23 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
           value="dashboard"
           className="p-6 space-y-6 animate-fade-in"
         >
+          {/* System Reset Notice */}
+          <Card className="border-blue-200 bg-blue-50">
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-3">
+                <Shield className="h-6 w-6 text-blue-600" />
+                <div>
+                  <h3 className="font-semibold text-blue-800">
+                    Real Device Mode Active
+                  </h3>
+                  <p className="text-sm text-blue-600">
+                    System cleared of simulated data. Only real wearable devices
+                    will be shown.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
           {/* Vitals Alerts */}
           {vitalsAlerts.length > 0 && (
             <Card className="border-0 bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-xl">
