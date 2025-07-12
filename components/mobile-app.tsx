@@ -814,14 +814,19 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
                     <Heart className="h-6 w-6 text-red-500" />
                   </div>
                   <div
-                    className={`text-2xl font-bold ${vitalSigns.heartRate > 100 || vitalSigns.heartRate < 60 ? "text-red-600" : "text-gray-800"}`}
+                    className={`text-2xl font-bold ${!hasRealData ? "text-gray-400" : vitalSigns.heartRate > 100 || vitalSigns.heartRate < 60 ? "text-red-600" : "text-gray-800"}`}
                   >
-                    {vitalSigns.heartRate || "--"}
+                    {hasRealData ? vitalSigns.heartRate : "--"}
                   </div>
                   <div className="text-sm text-gray-600">Heart Rate</div>
-                  <div className="text-xs text-gray-500 mt-1">BPM</div>
-                  {isConnected && (
+                  <div className="text-xs text-gray-500 mt-1">
+                    {hasRealData ? "BPM (Real)" : "BPM (No Data)"}
+                  </div>
+                  {isConnected && hasRealData && (
                     <div className="w-2 h-2 bg-green-400 rounded-full mx-auto mt-2 animate-pulse"></div>
+                  )}
+                  {isConnected && !hasRealData && (
+                    <div className="w-2 h-2 bg-orange-400 rounded-full mx-auto mt-2"></div>
                   )}
                 </CardContent>
               </Card>
