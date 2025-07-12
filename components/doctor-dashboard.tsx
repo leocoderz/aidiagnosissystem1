@@ -104,6 +104,7 @@ export default function DoctorDashboard({
   const [patients, setPatients] = useState<Patient[]>([]);
   const [notifications, setNotifications] = useState(5);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [vitalsAlerts, setVitalsAlerts] = useState<VitalAlert[]>([]);
   const [showAddPatient, setShowAddPatient] = useState(false);
   const [isAddingPatient, setIsAddingPatient] = useState(false);
   const [newPatientData, setNewPatientData] = useState({
