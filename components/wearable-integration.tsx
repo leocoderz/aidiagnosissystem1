@@ -460,14 +460,26 @@ export default function WearableIntegration({
               </Alert>
             )}
 
-            {bluetoothDevices.length === 0 && permissionGranted && (
-              <div className="text-center py-8 text-gray-500">
-                <Bluetooth className="mx-auto h-12 w-12 mb-4 opacity-50" />
-                <p>No paired devices found</p>
-                <p className="text-sm">
-                  Make sure your health devices are in pairing mode
-                </p>
-              </div>
+            {bluetoothDevices.length === 0 &&
+              permissionGranted &&
+              !demoMode && (
+                <div className="text-center py-8 text-gray-500">
+                  <Bluetooth className="mx-auto h-12 w-12 mb-4 opacity-50" />
+                  <p>No paired devices found</p>
+                  <p className="text-sm">
+                    Make sure your health devices are in pairing mode
+                  </p>
+                </div>
+              )}
+
+            {demoMode && (
+              <Alert className="mb-4">
+                <Info className="h-4 w-4" />
+                <AlertDescription>
+                  Demo Mode: These are simulated devices for demonstration
+                  purposes only.
+                </AlertDescription>
+              </Alert>
             )}
 
             <div className="space-y-3">
