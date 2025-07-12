@@ -120,7 +120,7 @@ export default function DoctorDashboard({
   });
   const { toast } = useToast();
 
-  // Load real patient data from localStorage
+  // Load real patient data and vitals alerts from localStorage
   useEffect(() => {
     const loadPatientData = () => {
       try {
