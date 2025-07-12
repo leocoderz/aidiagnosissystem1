@@ -837,14 +837,19 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
                     <Droplets className="h-6 w-6 text-blue-500" />
                   </div>
                   <div
-                    className={`text-2xl font-bold ${vitalSigns.oxygenSaturation < 95 ? "text-red-600" : "text-gray-800"}`}
+                    className={`text-2xl font-bold ${!hasRealData ? "text-gray-400" : vitalSigns.oxygenSaturation < 95 ? "text-red-600" : "text-gray-800"}`}
                   >
-                    {vitalSigns.oxygenSaturation || "--"}%
+                    {hasRealData ? `${vitalSigns.oxygenSaturation}%` : "--%"}
                   </div>
                   <div className="text-sm text-gray-600">Oxygen</div>
-                  <div className="text-xs text-gray-500 mt-1">SpO2</div>
-                  {isConnected && (
+                  <div className="text-xs text-gray-500 mt-1">
+                    {hasRealData ? "SpO2 (Real)" : "SpO2 (No Data)"}
+                  </div>
+                  {isConnected && hasRealData && (
                     <div className="w-2 h-2 bg-green-400 rounded-full mx-auto mt-2 animate-pulse"></div>
+                  )}
+                  {isConnected && !hasRealData && (
+                    <div className="w-2 h-2 bg-orange-400 rounded-full mx-auto mt-2"></div>
                   )}
                 </CardContent>
               </Card>
