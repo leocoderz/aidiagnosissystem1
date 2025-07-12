@@ -285,18 +285,27 @@ export async function detectAllRealDevices(): Promise<RealWearableDevice[]> {
   const allDevices: RealWearableDevice[] = [];
 
   try {
-    // Try all detection methods
-    const [bluetoothDevices, appleDevices, googleDevices, fitbitDevices] =
-      await Promise.allSettled([
-        detectBluetoothDevices(),
-        detectAppleHealthKit(),
-        detectGoogleFit(),
-        detectFitbitDevices(),
-      ]);
+    // Try all detection methods including Wi-Fi
+    const [
+      bluetoothDevices,
+      wifiDevices,
+      appleDevices,
+      googleDevices,
+      fitbitDevices,
+    ] = await Promise.allSettled([
+      detectBluetoothDevices(),
+      detectWiFiDevices(),
+      detectAppleHealthKit(),
+      detectGoogleFit(),
+      detectFitbitDevices(),
+    ]);
 
     // Collect successful results
     if (bluetoothDevices.status === "fulfilled") {
       allDevices.push(...bluetoothDevices.value);
+    }
+    if (wifiDevices.status === "fulfilled") {
+      allDevices.push(...wifiDevices.value);
     }
     if (appleDevices.status === "fulfilled") {
       allDevices.push(...appleDevices.value);
