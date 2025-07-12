@@ -183,27 +183,43 @@ export default function MobileApp({ user, onLogout }: MobileAppProps) {
         // Get real vitals data from the connected device
         const realVitalsData = await getRealVitalsFromDevice(connectedDevice);
 
-        // Update vitals with real data
-        const newVitals: VitalSigns = {
-          heartRate: realVitalsData.heartRate || 0,
-          bloodPressure: realVitalsData.bloodPressure || "--/--",
-          temperature: realVitalsData.temperature || 0,
-          oxygenSaturation: realVitalsData.oxygenSaturation || 0,
-          steps: realVitalsData.steps || 0,
-          calories: realVitalsData.calories || 0,
-          stressLevel: realVitalsData.stressLevel || 0,
-        };
+        // Only update if we actually received real data
+        if (
+          realVitalsData &&
+          (realVitalsData.heartRate > 0 || realVitalsData.steps > 0)
+        ) {
+          const newVitals: VitalSigns = {
+            heartRate: realVitalsData.heartRate || vitalSigns.heartRate,
+            bloodPressure:
+              realVitalsData.bloodPressure || vitalSigns.bloodPressure,
+            temperature: realVitalsData.temperature || vitalSigns.temperature,
+            oxygenSaturation:
+              realVitalsData.oxygenSaturation || vitalSigns.oxygenSaturation,
+            steps: realVitalsData.steps || vitalSigns.steps,
+            calories: realVitalsData.calories || vitalSigns.calories,
+            stressLevel: realVitalsData.stressLevel || vitalSigns.stressLevel,
+          };
 
-        setVitalSigns(newVitals);
-        setLastSync(new Date().toISOString());
+          setVitalSigns(newVitals);
+          setHasRealData(true);
+          setLastSync(new Date().toISOString());
 
-        // Send real vitals to monitoring API
-        sendVitalsToMonitoring(newVitals);
+          // Send real vitals to monitoring API
+          sendVitalsToMonitoring(newVitals);
 
-        toast({
-          title: "Vitals Updated",
-          description: `Real data from ${connectedDevice.name}`,
-        });
+          toast({
+            title: "Real Vitals Updated",
+            description: `Live data from ${connectedDevice.name} (${connectedDevice.connectionType})`,
+          });
+        } else {
+          // No real data available
+          setHasRealData(false);
+          toast({
+            title: "No Real Data",
+            description: `${connectedDevice.name} connected but no vitals data available`,
+            variant: "default",
+          });
+        }
       } catch (error) {
         console.error("Error getting real vitals:", error);
 
