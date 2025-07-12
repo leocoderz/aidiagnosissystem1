@@ -143,8 +143,9 @@ export default function DiagnosisResults({ diagnosis }: DiagnosisResultsProps) {
 
       {/* Detailed Analysis Tabs */}
       <Tabs defaultValue="diagnosis" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 text-sm">
+        <TabsList className="grid w-full grid-cols-5 text-sm">
           <TabsTrigger value="diagnosis">Assessment</TabsTrigger>
+          <TabsTrigger value="predictions">Predictions</TabsTrigger>
           <TabsTrigger value="treatment">Treatment</TabsTrigger>
           <TabsTrigger value="differential">Differential</TabsTrigger>
           <TabsTrigger value="monitoring">Follow-up</TabsTrigger>
@@ -204,6 +205,165 @@ export default function DiagnosisResults({ diagnosis }: DiagnosisResultsProps) {
                 <p className="text-xs text-gray-600 mt-1">
                   Based on symptom analysis and medical knowledge base
                 </p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="predictions">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5 text-orange-600" />
+                Disease Risk Predictions
+              </CardTitle>
+              <CardDescription>
+                AI-powered predictions for potential future health conditions
+                based on current symptoms and risk factors
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {diagnosis.diseasePredictions &&
+                diagnosis.diseasePredictions.length > 0 ? (
+                  <div>
+                    <h4 className="font-semibold mb-4 text-orange-700 flex items-center gap-2">
+                      <Brain className="h-4 w-4" />
+                      Predicted Health Risks
+                    </h4>
+                    <div className="space-y-4">
+                      {diagnosis.diseasePredictions.map(
+                        (prediction: any, index: number) => (
+                          <div
+                            key={index}
+                            className="p-4 border rounded-lg bg-orange-50 hover:bg-orange-100 transition-colors"
+                          >
+                            <div className="flex items-center justify-between mb-3">
+                              <h5 className="font-semibold text-orange-800">
+                                {prediction.disease}
+                              </h5>
+                              <div className="flex items-center gap-2">
+                                <Badge
+                                  variant="outline"
+                                  className={`${
+                                    prediction.riskScore >= 70
+                                      ? "border-red-500 text-red-700"
+                                      : prediction.riskScore >= 40
+                                        ? "border-yellow-500 text-yellow-700"
+                                        : "border-green-500 text-green-700"
+                                  }`}
+                                >
+                                  {prediction.riskScore}% Risk
+                                </Badge>
+                                <div className="w-16 bg-gray-200 rounded-full h-2">
+                                  <div
+                                    className={`h-2 rounded-full ${
+                                      prediction.riskScore >= 70
+                                        ? "bg-red-500"
+                                        : prediction.riskScore >= 40
+                                          ? "bg-yellow-500"
+                                          : "bg-green-500"
+                                    }`}
+                                    style={{
+                                      width: `${Math.min(prediction.riskScore, 100)}%`,
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                            <div className="space-y-2 text-sm">
+                              <p>
+                                <strong>Timeline:</strong> {prediction.timeline}
+                              </p>
+                              {prediction.preventionMeasures &&
+                                prediction.preventionMeasures.length > 0 && (
+                                  <div>
+                                    <strong>Prevention:</strong>
+                                    <ul className="mt-1 ml-4 list-disc text-orange-700">
+                                      {prediction.preventionMeasures.map(
+                                        (measure: string, i: number) => (
+                                          <li key={i}>{measure}</li>
+                                        ),
+                                      )}
+                                    </ul>
+                                  </div>
+                                )}
+                              {prediction.earlyWarningSignsForDisease &&
+                                prediction.earlyWarningSignsForDisease.length >
+                                  0 && (
+                                  <div>
+                                    <strong>Early Warning Signs:</strong>
+                                    <ul className="mt-1 ml-4 list-disc text-red-700">
+                                      {prediction.earlyWarningSignsForDisease.map(
+                                        (sign: string, i: number) => (
+                                          <li key={i}>{sign}</li>
+                                        ),
+                                      )}
+                                    </ul>
+                                  </div>
+                                )}
+                            </div>
+                          </div>
+                        ),
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <Activity className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                    <p className="text-gray-600">
+                      No specific disease predictions available for current
+                      symptoms.
+                    </p>
+                  </div>
+                )}
+
+                {diagnosis.predictiveInsights &&
+                  diagnosis.predictiveInsights.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold mb-3 text-blue-700 flex items-center gap-2">
+                        <Lightbulb className="h-4 w-4" />
+                        Clinical Insights for Healthcare Providers
+                      </h4>
+                      <div className="space-y-3">
+                        {diagnosis.predictiveInsights.map(
+                          (insight: string, index: number) => (
+                            <div
+                              key={index}
+                              className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg border-l-4 border-blue-400"
+                            >
+                              <CheckCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                              <span className="text-blue-800">{insight}</span>
+                            </div>
+                          ),
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                {diagnosis.riskFactors && diagnosis.riskFactors.length > 0 && (
+                  <div>
+                    <h4 className="font-semibold mb-3 text-red-700 flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4" />
+                      Contributing Risk Factors
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {diagnosis.riskFactors.map(
+                        (factor: string, index: number) => (
+                          <div
+                            key={index}
+                            className="flex items-center gap-2 p-2 bg-red-50 rounded border-l-2 border-red-400"
+                          >
+                            <div className="w-2 h-2 bg-red-500 rounded-full" />
+                            <span className="text-red-800 text-sm">
+                              {factor}
+                            </span>
+                          </div>
+                        ),
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
