@@ -320,7 +320,25 @@ export async function detectAllRealDevices(): Promise<RealWearableDevice[]> {
     console.error("Error detecting devices:", error);
   }
 
-  return allDevices;
+  // Remove duplicates based on device ID and merge connection types
+  const deviceMap = new Map<string, RealWearableDevice>();
+
+  allDevices.forEach((device) => {
+    const existing = deviceMap.get(device.id);
+    if (existing) {
+      // Merge connection types if same device found via different methods
+      if (existing.connectionType !== device.connectionType) {
+        existing.connectionType = "both";
+      }
+      // Update with most recent data
+      existing.lastSync = device.lastSync;
+      existing.isConnected = device.isConnected || existing.isConnected;
+    } else {
+      deviceMap.set(device.id, device);
+    }
+  });
+
+  return Array.from(deviceMap.values());
 }
 
 // Get device type from name
