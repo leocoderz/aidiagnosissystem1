@@ -9,6 +9,19 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-}
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          {
+            key: "Permissions-Policy",
+            value: "bluetooth=*, camera=*, microphone=*, geolocation=*",
+          },
+        ],
+      },
+    ];
+  },
+};
 
-export default nextConfig
+export default nextConfig;
