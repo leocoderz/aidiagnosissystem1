@@ -133,12 +133,90 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
     }
   };
 
+  const checkUserExists = (email: string): any | null => {
+    const existingUsers = JSON.parse(
+      localStorage.getItem("sympcare24_users") || "[]",
+    );
+    return existingUsers.find((user: any) => user.email === email) || null;
+  };
+
+  const saveUser = (user: LoginUser) => {
+    const existingUsers = JSON.parse(
+      localStorage.getItem("sympcare24_users") || "[]",
+    );
+    const existingUserIndex = existingUsers.findIndex(
+      (u: any) => u.email === user.email,
+    );
+
+    if (existingUserIndex >= 0) {
+      existingUsers[existingUserIndex] = {
+        ...user,
+        lastLogin: new Date().toISOString(),
+      };
+    } else {
+      existingUsers.push({
+        ...user,
+        createdAt: new Date().toISOString(),
+        lastLogin: new Date().toISOString(),
+      });
+    }
+
+    localStorage.setItem("sympcare24_users", JSON.stringify(existingUsers));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
       validateForm();
+
+      // Check if user exists for signin
+      if (authMode === "signin") {
+        const existingUser = checkUserExists(formData.email);
+        if (!existingUser) {
+          throw new Error(
+            "Account not found. Please sign up first or check your email address.",
+          );
+        }
+
+        // In a real app, you'd verify the password here
+        // For now, we'll just check if the account exists
+
+        const user: LoginUser = {
+          id: existingUser.id,
+          email: existingUser.email,
+          name: existingUser.name,
+          type: existingUser.type,
+          avatar: existingUser.avatar,
+          age: existingUser.age,
+          gender: existingUser.gender,
+          phone: existingUser.phone,
+          address: existingUser.address,
+          emergencyContact: existingUser.emergencyContact,
+          medicalHistory: existingUser.medicalHistory,
+          specialization: existingUser.specialization,
+          licenseNumber: existingUser.licenseNumber,
+          hospital: existingUser.hospital,
+        };
+
+        // Update last login
+        saveUser(user);
+
+        toast({
+          title: "Welcome Back!",
+          description: `Successfully signed in as ${user.name}`,
+        });
+
+        onLogin(user);
+        return;
+      }
+
+      // Handle signup
+      const existingUser = checkUserExists(formData.email);
+      if (existingUser) {
+        throw new Error("Account already exists. Please sign in instead.");
+      }
 
       // Simulate API call delay
       await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -202,43 +280,40 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
         user.hospital = formData.hospital;
       }
 
-      // Send welcome email for new signups
-      if (authMode === "signup") {
-        try {
-          const emailResponse = await fetch("/api/send-email", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              email: user.email,
-              name: user.name,
-              type: user.type,
-            }),
-          });
+      // Save user to storage
+      saveUser(user);
 
-          if (emailResponse.ok) {
-            toast({
-              title: "Account Created!",
-              description: `Welcome to SympCare24, ${user.name}! Check your email for a welcome message.`,
-            });
-          } else {
-            toast({
-              title: "Account Created!",
-              description: `Welcome to SympCare24, ${user.name}! (Email notification failed)`,
-            });
-          }
-        } catch (emailError) {
-          console.error("Email notification error:", emailError);
+      // Send welcome email for new signups
+      try {
+        const emailResponse = await fetch("/api/send-email", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: user.email,
+            name: user.name,
+            type: user.type,
+            isWelcome: true,
+          }),
+        });
+
+        if (emailResponse.ok) {
+          toast({
+            title: "Account Created!",
+            description: `Welcome to SympCare24, ${user.name}! Check your email for a welcome message.`,
+          });
+        } else {
           toast({
             title: "Account Created!",
             description: `Welcome to SympCare24, ${user.name}! (Email notification failed)`,
           });
         }
-      } else {
+      } catch (emailError) {
+        console.error("Email notification error:", emailError);
         toast({
-          title: "Welcome Back!",
-          description: `Successfully signed in as ${user.name}`,
+          title: "Account Created!",
+          description: `Welcome to SympCare24, ${user.name}! (Email notification failed)`,
         });
       }
 
