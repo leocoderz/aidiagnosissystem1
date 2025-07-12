@@ -186,6 +186,34 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
     try {
       validateForm();
 
+      // Handle forgot password
+      if (authMode === "forgot") {
+        const response = await fetch("/api/forgot-password", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: formData.email,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          setForgotPasswordSent(true);
+          toast({
+            title: "Reset Link Sent",
+            description: data.message,
+          });
+        } else {
+          throw new Error(data.error || "Failed to send reset email");
+        }
+
+        setIsLoading(false);
+        return;
+      }
+
       // Check if user exists for signin
       if (authMode === "signin") {
         const existingUser = checkUserExists(formData.email);
